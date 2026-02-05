@@ -1,0 +1,4 @@
+[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_learn/src/main/scala/main.scala:20:1: expected class or object definition
+[error] def runSimulation() = {
+[error] ^
+[error] one error found
