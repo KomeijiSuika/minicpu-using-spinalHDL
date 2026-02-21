@@ -27,6 +27,13 @@ object Funct3Load extends SpinalEnum {
   val LHU = 5.U(3 bits)  // Load Half-word (unsigned)
 }
 
+object Funct3Store extends SpinalEnum {
+  // funct3 for STORE instructions (bits 14:12)
+  val SB = 0.U(3 bits)  // Store Byte
+  val SH = 1.U(3 bits)  // Store Half-word
+  val SW = 2.U(3 bits)  // Store Word
+}
+
 object Funct3IType extends SpinalEnum {
   // funct3 for I-type and R-type ALU instructions
   val ADD_SUB = 0.U(3 bits)  // ADD (I) or SUB/ADD (R - depends on funct7)

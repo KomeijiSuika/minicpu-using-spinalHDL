@@ -14,7 +14,10 @@ class Decode extends Component {
     val rs1, rs2, rd = out UInt(5 bits)
     val imm = out UInt(32 bits)
     val regWriteEnable = out Bool()
+    // memory control 信号
     val memWriteEnable = out Bool()
+    val loadCtrl = out UInt(3 bits)
+    val storeCtrl = out UInt(3 bits)
     // ALU control 信号
     val aluCtrl = out(AluOp())
     val aluSrc = out UInt(2 bits)
@@ -34,6 +37,8 @@ class Decode extends Component {
   io.jumpCtrl := 0
   io.regWriteEnable := False
   io.memWriteEnable := False
+  io.loadCtrl := 3
+  io.storeCtrl := 3
 
   val opcode = Rv32iExtractor.getOpcode(io.inst)
   val funct3 = Rv32iExtractor.getFunct3(io.inst)
@@ -61,12 +66,24 @@ class Decode extends Component {
       io.regWriteEnable := True
       io.aluCtrl := AluOp.ADD
       io.aluSrc := aluSrcImm
+      switch(funct3) {
+        is(Funct3Load.LB)  { io.loadCtrl := 0 }
+        is(Funct3Load.LH)  { io.loadCtrl := 1 }
+        is(Funct3Load.LW)  { io.loadCtrl := 2 }
+        is(Funct3Load.LBU) { io.loadCtrl := 4 }
+        is(Funct3Load.LHU) { io.loadCtrl := 5 }
+      }
     }
     is(OpType.STORE) {
       io.imm := Rv32iExtractor.getImmS(io.inst)
       io.memWriteEnable := True
       io.aluCtrl := AluOp.ADD
       io.aluSrc := aluSrcImm
+      switch(funct3) {
+        is(Funct3Store.SB) { io.storeCtrl := 0 }
+        is(Funct3Store.SH) { io.storeCtrl := 1 }
+        is(Funct3Store.SW) { io.storeCtrl := 2 }
+      }
     }
     is(OpType.IMMOP) {
       io.imm := Rv32iExtractor.getImm12I(io.inst)
