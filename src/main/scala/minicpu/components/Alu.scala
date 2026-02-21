@@ -5,23 +5,17 @@ import spinal.lib._
 import minicpu.CpuConfig
 
 object AluOp extends SpinalEnum {
-  // 定义所有 ALU 操作枚举值
-  val AND, OR, XOR, SLL, SRL, SRA, ADD, SUB, SLT, SLTU, INVALID = newElement()
-  
-  // 自定义编码方案（匹配参考 Verilog 实现）
-  defaultEncoding = SpinalEnumEncoding("staticEncoding")(
-    AND     -> 0x1,  // 4'b0001
-    OR      -> 0x2,  // 4'b0010
-    XOR     -> 0x3,  // 4'b0011
-    SLL     -> 0x5,  // 4'b0101
-    SRL     -> 0x6,  // 4'b0110
-    SRA     -> 0x7,  // 4'b0111
-    ADD     -> 0x8,  // 4'b1000
-    SUB     -> 0xC,  // 4'b1100
-    SLT     -> 0xD,  // 4'b1101
-    SLTU    -> 0xF,  // 4'b1111
-    INVALID -> 0x0   // 4'b0000
-  )
+  val AND     = 0x1.U(4 bits)  // 4'b0001
+  val OR      = 0x2.U(4 bits)  // 4'b0010
+  val XOR     = 0x3.U(4 bits)  // 4'b0011
+  val SLL     = 0x5.U(4 bits)  // 4'b0101
+  val SRL     = 0x6.U(4 bits)  // 4'b0110
+  val SRA     = 0x7.U(4 bits)  // 4'b0111
+  val ADD     = 0x8.U(4 bits)  // 4'b1000
+  val SUB     = 0xC.U(4 bits)  // 4'b1100
+  val SLT     = 0xD.U(4 bits)  // 4'b1101
+  val SLTU    = 0xF.U(4 bits)  // 4'b1111
+  val INVALID = 0x0.U(4 bits)  // 4'b0000 - Default/Invalid operation
 }
 
 class Alu(config: CpuConfig) extends Component {
