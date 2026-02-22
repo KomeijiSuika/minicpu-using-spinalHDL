@@ -4,7 +4,7 @@ import spinal.core._
 import spinal.lib._
 import minicpu.CpuConfig
 
-object AluOp extends SpinalEnum {
+object AluOp {
   val AND     = 0x1.U(4 bits)  // 4'b0001
   val OR      = 0x2.U(4 bits)  // 4'b0010
   val XOR     = 0x3.U(4 bits)  // 4'b0011

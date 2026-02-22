@@ -2,73 +2,73 @@ package minicpu.isa
 
 import spinal.core._
 
-object OpType extends SpinalEnum {
+object OpType {
   // RV32I Main Opcodes (7 bits: inst[6:0])
-  val LOAD    = 0x03.U(7 bits)  // Load: LB, LH, LW, LBU, LHU
-  val IMMOP   = 0x13.U(7 bits)  // I-type: ADDI, ANDI, ORI, XORI, SLTI, SLTIU, SLLI, SRLI, SRAI
-  val AUIPC   = 0x17.U(7 bits)  // Add Upper Immediate to PC
-  val STORE   = 0x23.U(7 bits)  // Store: SB, SH, SW
-  val REGOP   = 0x33.U(7 bits)  // R-type: ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU
-  val LUI     = 0x37.U(7 bits)  // Load Upper Immediate
-  val BRANCH  = 0x63.U(7 bits)  // Branch: BEQ, BNE, BLT, BGE, BLTU, BGEU
-  val JALR    = 0x67.U(7 bits)  // Jump and Link Register
-  val JAL     = 0x6F.U(7 bits)  // Jump and Link
-  val MISCMEM = 0x0F.U(7 bits)  // FENCE, FENCE.I
-  val SYSTEM  = 0x73.U(7 bits)  // ECALL, EBREAK, CSR instructions
-  val INVALID = 0x7F.U(7 bits)  // Invalid opcode
+  val LOAD    = U(0x03, 7 bits) // Load: LB, LH, LW, LBU, LHU
+  val IMMOP   = U(0x13, 7 bits) // I-type: ADDI, ANDI, ORI, XORI, SLTI, SLTIU, SLLI, SRLI, SRAI
+  val AUIPC   = U(0x17, 7 bits) // Add Upper Immediate to PC
+  val STORE   = U(0x23, 7 bits) // Store: SB, SH, SW
+  val REGOP   = U(0x33, 7 bits) // R-type: ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU
+  val LUI     = U(0x37, 7 bits) // Load Upper Immediate
+  val BRANCH  = U(0x63, 7 bits) // Branch: BEQ, BNE, BLT, BGE, BLTU, BGEU
+  val JALR    = U(0x67, 7 bits) // Jump and Link Register
+  val JAL     = U(0x6F, 7 bits) // Jump and Link
+  val MISCMEM = U(0x0F, 7 bits) // FENCE, FENCE.I
+  val SYSTEM  = U(0x73, 7 bits) // ECALL, EBREAK, CSR instructions
+  val INVALID = U(0x7F, 7 bits) // Invalid opcode
 }
 
-object Funct3Load extends SpinalEnum {
+object Funct3Load {
   // funct3 for LOAD instructions (bits 14:12)
-  val LB  = 0.U(3 bits)  // Load Byte (signed)
-  val LH  = 1.U(3 bits)  // Load Half-word (signed)
-  val LW  = 2.U(3 bits)  // Load Word
-  val LBU = 4.U(3 bits)  // Load Byte (unsigned)
-  val LHU = 5.U(3 bits)  // Load Half-word (unsigned)
+  val LB  = U(0, 3 bits)  // Load Byte (signed)
+  val LH  = U(1, 3 bits)  // Load Half-word (signed)
+  val LW  = U(2, 3 bits)  // Load Word
+  val LBU = U(4, 3 bits)  // Load Byte (unsigned)
+  val LHU = U(5, 3 bits)  // Load Half-word (unsigned)
 }
 
-object Funct3Store extends SpinalEnum {
+object Funct3Store {
   // funct3 for STORE instructions (bits 14:12)
-  val SB = 0.U(3 bits)  // Store Byte
-  val SH = 1.U(3 bits)  // Store Half-word
-  val SW = 2.U(3 bits)  // Store Word
+  val SB = U(0, 3 bits)  // Store Byte
+  val SH = U(1, 3 bits)  // Store Half-word
+  val SW = U(2, 3 bits)  // Store Word
 }
 
-object Funct3IType extends SpinalEnum {
+object Funct3IType {
   // funct3 for I-type and R-type ALU instructions
-  val ADD_SUB = 0.U(3 bits)  // ADD (I) or SUB/ADD (R - depends on funct7)
-  val SLL     = 1.U(3 bits)  // Shift Left Logical
-  val SLT     = 2.U(3 bits)  // Set Less Than (signed)
-  val SLTU    = 3.U(3 bits)  // Set Less Than Unsigned
-  val XOR     = 4.U(3 bits)  // XOR
-  val SRL_SRA = 5.U(3 bits)  // Shift Right (Logical/Arithmetic - depends on funct7)
-  val OR      = 6.U(3 bits)  // OR
-  val AND     = 7.U(3 bits)  // AND
+  val ADD_SUB = U(0, 3 bits)  // ADD (I) or SUB/ADD (R - depends on funct7)
+  val SLL     = U(1, 3 bits)  // Shift Left Logical
+  val SLT     = U(2, 3 bits)  // Set Less Than (signed)
+  val SLTU    = U(3, 3 bits)  // Set Less Than Unsigned
+  val XOR     = U(4, 3 bits)  // XOR
+  val SRL_SRA = U(5, 3 bits)  // Shift Right (Logical/Arithmetic - depends on funct7)
+  val OR      = U(6, 3 bits)  // OR
+  val AND     = U(7, 3 bits)  // AND
 }
 
-object Funct3Branch extends SpinalEnum {
+object Funct3Branch {
   // funct3 for BRANCH instructions (bits 14:12)
-  val BEQ  = 0.U(3 bits)  // Branch if Equal
-  val BNE  = 1.U(3 bits)  // Branch if Not Equal
-  val BLT  = 4.U(3 bits)  // Branch if Less Than (signed) - Note: non-sequential
-  val BGE  = 5.U(3 bits)  // Branch if Greater or Equal (signed)
-  val BLTU = 6.U(3 bits)  // Branch if Less Than Unsigned
-  val BGEU = 7.U(3 bits)  // Branch if Greater or Equal Unsigned
+  val BEQ  = U(0, 3 bits)  // Branch if Equal
+  val BNE  = U(1, 3 bits)  // Branch if Not Equal
+  val BLT  = U(4, 3 bits)  // Branch if Less Than (signed) - Note: non-sequential
+  val BGE  = U(5, 3 bits)  // Branch if Greater or Equal (signed)
+  val BLTU = U(6, 3 bits)  // Branch if Less Than Unsigned
+  val BGEU = U(7, 3 bits)  // Branch if Greater or Equal Unsigned
 }
 
-object Funct7Type extends SpinalEnum {
+object Funct7Type {
   // funct7 for R-type instructions (bits 31:25)
-  val DEFAULT = 0x00.U(7 bits)  // ADD, SLL, SRL, AND, OR, XOR, SLT, SLTU
-  val ALT     = 0x20.U(7 bits)  // SUB, SRA (0x20 = 7'b0100000)
+  val DEFAULT = U(0x00, 7 bits)  // ADD, SLL, SRL, AND, OR, XOR, SLT, SLTU
+  val ALT     = U(0x20, 7 bits)  // SUB, SRA (0x20 = 7'b0100000)
 }
 
-object ImmType extends SpinalEnum {
+object ImmType {
   // Immediate extension type (内部用于 ImmGen - 编码可任意）
-  val I_TYPE = 0.U(3 bits)  // I-type: inst[31:20] sign-extended
-  val S_TYPE = 1.U(3 bits)  // S-type: {inst[31:25], inst[11:7]}
-  val B_TYPE = 2.U(3 bits)  // B-type: {inst[31], inst[7], inst[30:25], inst[11:8], 1'b0}
-  val U_TYPE = 3.U(3 bits)  // U-type: {inst[31:12], 12'b0}
-  val J_TYPE = 4.U(3 bits)  // J-type: {inst[31], inst[19:12], inst[20], inst[30:21], 1'b0}
+  val I_TYPE = U(0, 3 bits)  // I-type: inst[31:20] sign-extended
+  val S_TYPE = U(1, 3 bits)  // S-type: {inst[31:25], inst[11:7]}
+  val B_TYPE = U(2, 3 bits)  // B-type: {inst[31], inst[7], inst[30:25], inst[11:8], 1'b0}
+  val U_TYPE = U(3, 3 bits)  // U-type: {inst[31:12], 12'b0}
+  val J_TYPE = U(4, 3 bits)  // J-type: {inst[31], inst[19:12], inst[20], inst[30:21], 1'b0}
 }
 
 object Rv32iExtractor {
@@ -137,30 +137,30 @@ object Rv32iExtractor {
   /**
    * 判断是否为 R-type 指令
    */
-  def isRType(opcode: UInt): Bool = opcode === OP_REGOP
+  def isRType(opcode: UInt): Bool = opcode === OpType.REGOP
   
   /**
    * 判断是否为 I-type 指令
    */
-  def isIType(opcode: UInt): Bool = opcode === OP_IMMOP || opcode === OP_JALR || opcode === OP_LOAD
+  def isIType(opcode: UInt): Bool = opcode === OpType.IMMOP || opcode === OpType.JALR || opcode === OpType.LOAD
   
   /**
    * 判断是否为 Load 指令
    */
-  def isLoad(opcode: UInt): Bool = opcode === OP_LOAD
+  def isLoad(opcode: UInt): Bool = opcode === OpType.LOAD
   
   /**
    * 判断是否为 Store 指令
    */
-  def isStore(opcode: UInt): Bool = opcode === OP_STORE
+  def isStore(opcode: UInt): Bool = opcode === OpType.STORE
   
   /**
    * 判断是否为 Branch 指令
    */
-  def isBranch(opcode: UInt): Bool = opcode === OP_BRANCH
+  def isBranch(opcode: UInt): Bool = opcode === OpType.BRANCH
   
   /**
    * 判断是否为 Jump 指令（JAL 或 JALR）
    */
-  def isJump(opcode: UInt): Bool = opcode === OP_JAL || opcode === OP_JALR
+  def isJump(opcode: UInt): Bool = opcode === OpType.JAL || opcode === OpType.JALR
 }

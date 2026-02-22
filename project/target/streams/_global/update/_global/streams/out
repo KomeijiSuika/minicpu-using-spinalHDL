@@ -1,7 +1,3 @@
-[0m[[0m[0mdebug[0m] [0m[0mnot up to date. inChanged = true, force = false[0m
-[0m[[0m[0mdebug[0m] [0m[0mUpdating ProjectRef(uri("file:/home/shenby/workplace/small-project-attempt/SpinalHDL_learn/project/"), "spinalhdl_learn-build")...[0m
-[0m[[0m[0minfo[0m] [0m[0mUpdating spinalhdl_learn-build[0m
-[0m[[0m[0minfo[0m] [0m[0mResolved spinalhdl_learn-build dependencies[0m
-[0m[[0m[0minfo[0m] [0m[0mFetching artifacts of spinalhdl_learn-build[0m
-[0m[[0m[0minfo[0m] [0m[0mFetched artifacts of spinalhdl_learn-build[0m
-[0m[[0m[0mdebug[0m] [0m[0mDone updating ProjectRef(uri("file:/home/shenby/workplace/small-project-attempt/SpinalHDL_learn/project/"), "spinalhdl_learn-build")[0m
+[debug] not up to date. inChanged = true, force = false
+[debug] Updating ProjectRef(uri("file:/home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/project/"), "spinalhdl_minicpu-build")...
+[debug] Done updating ProjectRef(uri("file:/home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/project/"), "spinalhdl_minicpu-build")

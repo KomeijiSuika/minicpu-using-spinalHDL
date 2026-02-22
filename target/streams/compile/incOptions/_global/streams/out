@@ -1,2 +1,25 @@
-[debug] Created transactional ClassFileManager with tempDir = /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_learn/target/scala-2.12/classes.bak
-[debug] Removing the temporary directory used for backing up class files: /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_learn/target/scala-2.12/classes.bak
+[debug] Created transactional ClassFileManager with tempDir = /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/target/scala-2.12/classes.bak
+[debug] About to delete class files:
+[debug] 	StreamPrefixAdderTop.class
+[debug] 	StreamPrefixAdderTop$.class
+[debug] 	StreamPrefixAdderTop$delayedInit$body.class
+[debug] 	StreamPrefixAdder$$anon$1.class
+[debug] 	StreamPrefixAdder.class
+[debug] 	StreamPrefixAdder$.class
+[debug] We backup class files:
+[debug] 	StreamPrefixAdderTop.class
+[debug] 	StreamPrefixAdderTop$.class
+[debug] 	StreamPrefixAdderTop$delayedInit$body.class
+[debug] 	StreamPrefixAdder$$anon$1.class
+[debug] 	StreamPrefixAdder.class
+[debug] 	StreamPrefixAdder$.class
+[debug] Rolling back changes to class files.
+[debug] Removing generated classes:
+[debug] Restoring class files: 
+[debug] 	StreamPrefixAdderTop.class
+[debug] 	StreamPrefixAdder$.class
+[debug] 	StreamPrefixAdder.class
+[debug] 	StreamPrefixAdderTop$delayedInit$body.class
+[debug] 	StreamPrefixAdder$$anon$1.class
+[debug] 	StreamPrefixAdderTop$.class
+[debug] Removing the temporary directory used for backing up class files: /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/target/scala-2.12/classes.bak
