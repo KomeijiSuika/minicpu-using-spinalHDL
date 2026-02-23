@@ -56,7 +56,7 @@ SpinalHDL_minicpu/
 
 ### 1) 生成 Verilog
 
-```bash
+```fish
 sbt run
 # 等价：sbt "runMain minicpu.MyCpuMain"
 ```
@@ -65,7 +65,7 @@ sbt run
 
 ### 2) 运行所有测试
 
-```bash
+```fish
 sbt test
 ```
 
@@ -73,14 +73,20 @@ sbt test
 
 默认会运行 `local-rv32i/asm/itypes.memh`：
 
-```bash
+```fish
 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 ```
 
 指定程序与周期数：
 
-```bash
+```fish
 sbt -Drv32i.memh=local-rv32i/asm/itypes.memh -Drv32i.maxCycles=300 "testOnly minicpu.PipelinedRv32iProgramTest"
+```
+
+也支持直接传 `.s`（测试会自动调用 `local-rv32i/assembler.py` 先生成 `.memh`）：
+
+```fish
+env RV32I_PROGRAM=local-rv32i/asm/btypes.s RV32I_MAX_CYCLES=300 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 ```
 
 输出结果会写入 `sim_out/`：
@@ -90,10 +96,59 @@ sbt -Drv32i.memh=local-rv32i/asm/itypes.memh -Drv32i.maxCycles=300 "testOnly min
 
 ### 4) 从汇编生成 `.memh`
 
-```bash
+```fish
 python3 -m pip install bitstring
 python3 local-rv32i/assembler.py local-rv32i/asm/itypes.s -o local-rv32i/asm/itypes.memh
 ```
+
+### 5) 测试 local-rv32i 的全部类型程序
+
+`local-rv32i/asm/` 里常见的类型包括：
+
+- `itypes.s`
+- `rtypes/irtypes.s`（当前目录中是 `irtypes.s`）
+- `btypes.s`
+- `lstypes.s`
+- `functions.s`
+- `delay.s`
+- `peripherals.s`
+- `peripherals_leds.s`
+
+先安装汇编器依赖（只需一次）：
+
+```fish
+python3 -m pip install bitstring
+```
+
+#### 方式 A：直接遍历所有 `.s`（推荐）
+
+```fish
+for s in local-rv32i/asm/*.s
+    echo "===== Testing $s ====="
+    env RV32I_PROGRAM="$s" RV32I_MAX_CYCLES=400 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
+end
+```
+
+说明：每个 `.s` 会先自动汇编到 `sim_out/generated_memh/*.memh`，再运行仿真。
+
+#### 方式 B：先手动批量生成 `.memh`，再逐个测试
+
+```fish
+for s in local-rv32i/asm/*.s
+    set m (string replace -r '\\.s$' '.memh' -- $s)
+    python3 local-rv32i/assembler.py $s -o $m
+end
+
+for m in local-rv32i/asm/*.memh
+    echo "===== Testing $m ====="
+    sbt -Drv32i.memh=$m -Drv32i.maxCycles=400 "testOnly minicpu.PipelinedRv32iProgramTest"
+end
+```
+
+每次运行后结果导出到 `sim_out/`：
+
+- `regfile_<program>.txt`
+- `datamem_<program>.txt`
 
 ## 测试说明
 
