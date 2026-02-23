@@ -90,6 +90,22 @@ class CpuInstructionTest extends AnyFunSuite {
 
       sim.printRegisters()
       println(s"x4 = ${sim.readRegister(4)} (expected: -2 or 4294967294)")
+      
+      // assert: Scala 的断言函数，用于验证测试结果
+      // 
+      // 语法：assert(条件表达式, 错误消息)
+      // 
+      // 工作原理：
+      // 1. 计算条件表达式的布尔值
+      // 2. 如果为 true  → 测试通过，继续执行
+      // 3. 如果为 false → 抛出 AssertionError 异常，测试失败
+      //
+      // 在这个例子中：
+      // - 读取 x4 寄存器的实际值
+      // - 计算期望值：(-2) & 0xFFFFFFFF = 4294967294（32位补码表示）
+      // - 比较：实际值 == 期望值？
+      //   - 是 → 测试通过 ✓
+      //   - 否 → 测试失败 ✗，打印 "SUB 指令执行失败"
       val expected = (-2) & 0xFFFFFFFFL
       assert(sim.readRegister(4) == expected, "SUB 指令执行失败")
     }
@@ -228,14 +244,35 @@ class SimData(dut: CpuTop) {
    * @param instructions 机器码列表（32位无符号整数）
    */
   def loadInstructions(instructions: Seq[Long]): Unit = {
-    // 在仿真中，我们通过直接写入内存来设置指令
-    val instrMem = dut.instrMem
+    // 获取 CpuTop 内部的指令存储器对象
+    val instrMem = dut.instrMem.instrMem
+    
+    // zipWithIndex: 将序列中的每个元素与其索引配对
+    // 例如: Seq("a", "b", "c").zipWithIndex → Seq(("a", 0), ("b", 1), ("c", 2))
+    // 对于指令序列: Seq(0x00a00093, 0x00b00113).zipWithIndex 
+    //              → Seq((0x00a00093, 0), (0x00b00113, 1))
+    //
+    // foreach: 遍历序列中的每个元素，对每个元素执行函数
+    // { case (instr, idx) => ... }: 模式匹配，将元组解构为 instr（指令）和 idx（索引）
+    //
+    // 整体效果：遍历所有指令，同时获得每条指令的内容和它的索引位置
     instructions.zipWithIndex.foreach { case (instr, idx) =>
-      // 注意：这取决于 InstrMem 如何实现
-      // 理想情况下应该有一个写接口，或者在仿真中直接访问
-      println(s"[加载指令] 加载指令 [$idx]: 0x${instr.toHexString}")
+      // setBigInt(address, value): SpinalHDL 仿真 API
+      // 用于在仿真时向 Mem（内存）对象的指定地址写入数据
+      // 
+      // 前提条件：Mem 必须标记为 simPublic()（在 InstrMem.scala 中已经做了）
+      // 
+      // 参数：
+      // - idx: 内存地址（字地址，不是字节地址）
+      // - BigInt(instr): 要写入的值，转换为 BigInt 类型
+      //
+      // 效果：将机器码写入指令内存的第 idx 个位置
+      // 例如：setBigInt(0, 0x00a00093) 将 ADDI 指令写入地址 0
+      instrMem.setBigInt(idx, BigInt(instr))
+      
+      println(s"[加载指令] mem[$idx] = 0x${instr.toHexString}")
     }
-    println(s"[加载指令] 已加载 ${instructions.length} 条指令到指令存储器")
+    println(s"[加载指令] 成功加载 ${instructions.length} 条指令到指令存储器")
   }
 
   /**
@@ -265,11 +302,24 @@ class SimData(dut: CpuTop) {
    * @return 寄存器值
    */
   def readRegister(regIdx: Int): Long = {
-    // 设置读地址
+    // #= 操作符：SpinalHDL 仿真中的信号赋值操作符
+    // 用于在仿真时向硬件信号/端口赋值（类似于 Verilog 中的 force 或 SystemVerilog 中的赋值）
+    // 
+    // 对比：
+    // - Scala 普通赋值 `=`：给 Scala 变量赋值，如 val x = 5
+    // - 仿真赋值 `#=`：给硬件信号赋值，如 dut.io.addr #= 10
+    //
+    // 这里：dut.io.dbg_regAddr #= regIdx
+    // 含义：将 regIdx 的值写入到 CPU 的调试接口 dbg_regAddr 端口
+    // 效果：就像在硬件仿真中给该信号线施加电压，设置其值
     dut.io.dbg_regAddr #= regIdx
+    
     // 等待一个周期让数据稳定
+    // 因为硬件是时序逻辑，需要时钟周期来传播信号
     dut.clockDomain.waitSampling()
-    // 读取输出
+    
+    // .toLong：读取硬件信号的值，并转换为 Scala 的 Long 类型
+    // 这是从硬件到软件的数据传输
     dut.io.dbg_regData.toLong
   }
 
@@ -288,11 +338,15 @@ class SimData(dut: CpuTop) {
    * 写入数据内存中指定地址的值（字寻址）
    */
   def writeDataMemory(wordAddr: Int, value: Long): Unit = {
-    dut.io.dbg_memAddr #= wordAddr
-    dut.io.dbg_memWriteEnable #= true
-    dut.io.dbg_memWriteData #= value
+    // 使用 #= 给多个硬件信号赋值，模拟内存写操作
+    dut.io.dbg_memAddr #= wordAddr           // 设置要写入的内存地址
+    dut.io.dbg_memWriteEnable #= true        // 使能写操作（true 在硬件中会转为 1）
+    dut.io.dbg_memWriteData #= value         // 设置要写入的数据
+    
+    // 等待一个时钟周期，让硬件完成写入操作
     dut.clockDomain.waitSampling()
-    dut.io.dbg_memWriteEnable #= false
+    
+    dut.io.dbg_memWriteEnable #= false       // 关闭写使能，结束写操作
     println(s"[内存写入] mem[$wordAddr] = $value")
   }
 
