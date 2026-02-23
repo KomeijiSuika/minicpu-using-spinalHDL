@@ -40,7 +40,7 @@ SpinalHDL_minicpu/
 │       ├── CpuSmokeTest.scala
 │       ├── CpuInstructionTest.scala
 │       └── PipelinedRv32iProgramTest.scala
-├── local-rv32i/       # 本仓库内置的汇编器与测试程序
+├── local-rv32i/       # 本仓库内置的汇编器与测试程序，引用自https://github.com/pietroglyph/pipelined-rv32i.git
 ├── rtl/               # 生成的 Verilog
 └── sim_out/           # 程序测试导出的寄存器/内存快照
 ```
