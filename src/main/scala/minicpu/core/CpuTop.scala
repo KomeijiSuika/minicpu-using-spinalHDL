@@ -13,6 +13,15 @@ class CpuTop(config: CpuConfig) extends Component {
     // 定义对外接口，例如 instruction bus, data bus
     val iBus = master(Stream(UInt(32 bits))) // 简化示例
     val dBus = master(Stream(UInt(32 bits))) // 简化示例
+    
+    // 调试接口（用于测试）
+    val dbg_regAddr = in UInt(5 bits)
+    val dbg_regData = out UInt(config.xlen bits)
+    val dbg_memAddr = in UInt(config.xlen bits)
+    val dbg_memData = out UInt(config.xlen bits)
+    val dbg_memWriteEnable = in Bool()
+    val dbg_memWriteData = in UInt(config.xlen bits)
+    val dbg_pc = out UInt(config.xlen bits)
   }
 
   // 组件实例化
@@ -53,7 +62,6 @@ class CpuTop(config: CpuConfig) extends Component {
 
   // EX 阶段源操作数（含前递）
   val exRs1 = UInt(config.xlen bits)
-  exRs1 := idEx.regData1
   switch(forwardUnit.io.forwardA) {
     is(1) { exRs1 := exMem.aluResult } // EX/MEM
     is(2) { exRs1 := wbValue }         // MEM/WB
@@ -61,7 +69,6 @@ class CpuTop(config: CpuConfig) extends Component {
   }
 
   val exRs2 = UInt(config.xlen bits)
-  exRs2 := idEx.regData2
   switch(forwardUnit.io.forwardB) {
     is(1) { exRs2 := exMem.aluResult } // EX/MEM
     is(2) { exRs2 := wbValue }         // MEM/WB
@@ -70,7 +77,6 @@ class CpuTop(config: CpuConfig) extends Component {
 
   // 分支/跳转在 EX 决策（最小实现：branchCtrl/jumpCtrl 来自 idEx）
   val exBranchTaken = Bool()
-  exBranchTaken := False
   switch(idEx.branchCtrl) {
     is(1) { exBranchTaken := exRs1 === exRs2 }                     // BEQ
     is(2) { exBranchTaken := exRs1 =/= exRs2 }                     // BNE
@@ -168,6 +174,10 @@ class CpuTop(config: CpuConfig) extends Component {
   dataMem.io.memWriteEnable := exMem.memWriteEnable
   dataMem.io.loadCtrl := exMem.loadCtrl
   dataMem.io.storeCtrl := exMem.storeCtrl
+  // dataMem debug 端口
+  dataMem.io.dbgAddr := io.dbg_memAddr
+  dataMem.io.dbgWriteEnable := io.dbg_memWriteEnable
+  dataMem.io.dbgWriteData := io.dbg_memWriteData
 
   // MEM/WB 流水线寄存器
   memWb.rd := exMem.rd
@@ -182,10 +192,12 @@ class CpuTop(config: CpuConfig) extends Component {
   io.dBus.valid := False
   io.dBus.payload := 0
 
-
-  
-
-  
-
-
+  // ========================
+  // 调试接口实现
+  // ========================
+  // 寄存器读取（使用专用调试读端口）
+  regFile.io.dbg_readAddr := io.dbg_regAddr
+  io.dbg_regData := regFile.io.dbg_readData
+  io.dbg_memData := dataMem.io.dbgReadData
+  io.dbg_pc := PC
 }

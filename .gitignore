@@ -1,3 +1,7 @@
 VexRiscv
 pipelined-rv32i/
-
+target/
+tmp/
+rtl/
+sim_out/
+simWorkspace/

@@ -1,40 +1,7 @@
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/isa/Decode.scala:5:8: not found: object Rv32iEncoding
-[error] import Rv32iEncoding._
-[error]        ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:7:20: object Rv32iEncoding is not a member of package minicpu.isa
-[error] import minicpu.isa.Rv32iEncoding._
-[error]                    ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:23:8: not found: value Funct3Load
-[error]     is(Funct3Load.LB)  { io.readData := dataMem(io.addr >> 2)(7 downto 0).asSInt.resize(config.xlen).asUInt }   // LB
-[error]        ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:24:8: not found: value Funct3Load
-[error]     is(Funct3Load.LH)  { io.readData := dataMem(io.addr >> 2)(15 downto 0).asSInt.resize(config.xlen).asUInt } // LH
-[error]        ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:25:8: not found: value Funct3Load
-[error]     is(Funct3Load.LW)  { io.readData := dataMem(io.addr >> 2) }                                           // LW
-[error]        ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:26:8: not found: value Funct3Load
-[error]     is(Funct3Load.LBU) { io.readData := dataMem(io.addr >> 2)(7 downto 0).asUInt.resize(config.xlen) }   // LBU
-[error]        ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:26:75: value asUInt is not a member of spinal.core.UInt
-[error]     is(Funct3Load.LBU) { io.readData := dataMem(io.addr >> 2)(7 downto 0).asUInt.resize(config.xlen) }   // LBU
-[error]                                                                           ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:27:8: not found: value Funct3Load
-[error]     is(Funct3Load.LHU) { io.readData := dataMem(io.addr >> 2)(15 downto 0).asUInt.resize(config.xlen) } // LHU
-[error]        ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:27:76: value asUInt is not a member of spinal.core.UInt
-[error]     is(Funct3Load.LHU) { io.readData := dataMem(io.addr >> 2)(15 downto 0).asUInt.resize(config.xlen) } // LHU
-[error]                                                                            ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:33:10: not found: value Funct3Store
-[error]       is(Funct3Store.SB) { dataMem(io.addr >> 2)(7 downto 0) := io.writeData(7 downto 0) }   // SB
-[error]          ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:34:10: not found: value Funct3Store
-[error]       is(Funct3Store.SH) { dataMem(io.addr >> 2)(15 downto 0) := io.writeData(15 downto 0) } // SH
-[error]          ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:35:10: not found: value Funct3Store
-[error]       is(Funct3Store.SW) { dataMem(io.addr >> 2) := io.writeData }                             // SW
-[error]          ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/InstrMem.scala:15:12: value simPublic is not a member of spinal.core.Mem[spinal.core.UInt]
-[error]   instrMem.simPublic() // 便于仿真观察
-[error]            ^
-[error] 13 errors found
+[0m[[0m[31merror[0m] [0m[0m/home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:38:74: value asUInt is not a member of spinal.core.UInt[0m
+[0m[[0m[31merror[0m] [0m[0m      is(Funct3Store.SB) { dataMem(wordAddr) := io.writeData(7 downto 0).asUInt.resized }   // SB[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                         ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:39:75: value asUInt is not a member of spinal.core.UInt[0m
+[0m[[0m[31merror[0m] [0m[0m      is(Funct3Store.SH) { dataMem(wordAddr) := io.writeData(15 downto 0).asUInt.resized } // SH[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                          ^[0m
+[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m
