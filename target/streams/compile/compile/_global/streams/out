@@ -1,7 +1,4 @@
-[0m[[0m[31merror[0m] [0m[0m/home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:38:74: value asUInt is not a member of spinal.core.UInt[0m
-[0m[[0m[31merror[0m] [0m[0m      is(Funct3Store.SB) { dataMem(wordAddr) := io.writeData(7 downto 0).asUInt.resized }   // SB[0m
-[0m[[0m[31merror[0m] [0m[0m                                                                         ^[0m
-[0m[[0m[31merror[0m] [0m[0m/home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:39:75: value asUInt is not a member of spinal.core.UInt[0m
-[0m[[0m[31merror[0m] [0m[0m      is(Funct3Store.SH) { dataMem(wordAddr) := io.writeData(15 downto 0).asUInt.resized } // SH[0m
-[0m[[0m[31merror[0m] [0m[0m                                                                          ^[0m
-[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m
+[0m[[0m[31merror[0m] [0m[0m/home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mem/DataMem.scala:32:40: value asUInt is not a member of spinal.core.UInt[0m
+[0m[[0m[31merror[0m] [0m[0m  val byteOffset = io.addr(1 downto 0).asUInt[0m
+[0m[[0m[31merror[0m] [0m[0m                                       ^[0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m

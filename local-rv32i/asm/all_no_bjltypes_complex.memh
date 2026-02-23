@@ -1,0 +1,123 @@
+123450b7 // PC=0x0 line=10: lui   x1, 0x12345
+00000117 // PC=0x4 line=11: auipc x2, 0
+00000193 // PC=0x8 line=12: addi  x3, x0, 0
+00400213 // PC=0xc line=13: addi  x4, x0, 4
+00800293 // PC=0x10 line=14: addi  x5, x0, 8
+00c00313 // PC=0x14 line=15: addi  x6, x0, 12
+01000393 // PC=0x18 line=16: addi  x7, x0, 16
+01400413 // PC=0x1c line=17: addi  x8, x0, 20
+01800493 // PC=0x20 line=18: addi  x9, x0, 24
+01c00513 // PC=0x24 line=19: addi  x10, x0, 28
+01100593 // PC=0x28 line=22: addi  x11, x0, 17
+ff700613 // PC=0x2c line=23: addi  x12, x0, -9
+03f00693 // PC=0x30 line=24: addi  x13, x0, 63
+00500713 // PC=0x34 line=25: addi  x14, x0, 5
+00359793 // PC=0x38 line=26: slli  x15, x11, 3
+0027d813 // PC=0x3c line=27: srli  x16, x15, 2
+40165893 // PC=0x40 line=28: srai  x17, x12, 1
+1557c913 // PC=0x44 line=29: xori  x18, x15, 0x155
+02296993 // PC=0x48 line=30: ori   x19, x18, 0x22
+1ff9fa13 // PC=0x4c line=31: andi  x20, x19, 0x1ff
+fff62a93 // PC=0x50 line=32: slti  x21, x12, -1
+02063b13 // PC=0x54 line=33: sltiu x22, x12, 32
+00f58bb3 // PC=0x58 line=36: add   x23, x11, x15
+410b8c33 // PC=0x5c line=37: sub   x24, x23, x16
+00e59cb3 // PC=0x60 line=38: sll   x25, x11, x14
+00b62d33 // PC=0x64 line=39: slt   x26, x12, x11
+00b63db3 // PC=0x68 line=40: sltu  x27, x12, x11
+018bce33 // PC=0x6c line=41: xor   x28, x23, x24
+015e5eb3 // PC=0x70 line=42: srl   x29, x28, x21
+41565f33 // PC=0x74 line=43: sra   x30, x12, x21
+01eeefb3 // PC=0x78 line=44: or    x31, x29, x30
+01cff0b3 // PC=0x7c line=45: and   x1, x31, x28
+fb308113 // PC=0x80 line=48: addi  x2, x1, -77
+3aa14193 // PC=0x84 line=49: xori  x3, x2, 0x3aa
+0411e213 // PC=0x88 line=50: ori   x4, x3, 0x041
+2ff27293 // PC=0x8c line=51: andi  x5, x4, 0x2ff
+00012313 // PC=0x90 line=52: slti  x6, x2, 0
+3841b393 // PC=0x94 line=53: sltiu x7, x3, 900
+00229413 // PC=0x98 line=54: slli  x8, x5, 2
+00345493 // PC=0x9c line=55: srli  x9, x8, 3
+40415513 // PC=0xa0 line=56: srai  x10, x2, 4
+009405b3 // PC=0xa4 line=57: add   x11, x8, x9
+40a58633 // PC=0xa8 line=58: sub   x12, x11, x10
+005646b3 // PC=0xac line=59: xor   x13, x12, x5
+0076e733 // PC=0xb0 line=60: or    x14, x13, x7
+006777b3 // PC=0xb4 line=61: and   x15, x14, x6
+00759833 // PC=0xb8 line=62: sll   x16, x11, x7
+006858b3 // PC=0xbc line=63: srl   x17, x16, x6
+40765933 // PC=0xc0 line=64: sra   x18, x12, x7
+00b629b3 // PC=0xc4 line=65: slt   x19, x12, x11
+00e6ba33 // PC=0xc8 line=66: sltu  x20, x13, x14
+00b02023 // PC=0xcc line=69: sw    x11, 0(x0)
+00c02223 // PC=0xd0 line=70: sw    x12, 4(x0)
+00d02423 // PC=0xd4 line=71: sw    x13, 8(x0)
+00e02623 // PC=0xd8 line=72: sw    x14, 12(x0)
+00f02823 // PC=0xdc line=73: sw    x15, 16(x0)
+01001a23 // PC=0xe0 line=74: sh    x16, 20(x0)
+01101c23 // PC=0xe4 line=75: sh    x17, 24(x0)
+01201e23 // PC=0xe8 line=76: sh    x18, 28(x0)
+03300023 // PC=0xec line=77: sb    x19, 32(x0)
+03400223 // PC=0xf0 line=78: sb    x20, 36(x0)
+00000a97 // PC=0xf4 line=81: auipc x21, 0
+00abcb37 // PC=0xf8 line=82: lui   x22, 0x00abc
+016a8bb3 // PC=0xfc line=83: add   x23, x21, x22
+402b8c33 // PC=0x100 line=84: sub   x24, x23, x2
+003c4cb3 // PC=0x104 line=85: xor   x25, x24, x3
+004ced33 // PC=0x108 line=86: or    x26, x25, x4
+005d7db3 // PC=0x10c line=87: and   x27, x26, x5
+006d9e33 // PC=0x110 line=88: sll   x28, x27, x6
+007e5eb3 // PC=0x114 line=89: srl   x29, x28, x7
+406c5f33 // PC=0x118 line=90: sra   x30, x24, x6
+07ff0f93 // PC=0x11c line=93: addi  x31, x30, 127
+f80f8093 // PC=0x120 line=94: addi  x1, x31, -128
+2a50c113 // PC=0x124 line=95: xori  x2, x1, 0x2a5
+14016193 // PC=0x128 line=96: ori   x3, x2, 0x140
+3ff1f213 // PC=0x12c line=97: andi  x4, x3, 0x3ff
+0010a293 // PC=0x130 line=98: slti  x5, x1, 1
+40013313 // PC=0x134 line=99: sltiu x6, x2, 1024
+00121393 // PC=0x138 line=100: slli  x7, x4, 1
+0013d413 // PC=0x13c line=101: srli  x8, x7, 1
+4030d493 // PC=0x140 line=102: srai  x9, x1, 3
+00838533 // PC=0x144 line=105: add   x10, x7, x8
+409505b3 // PC=0x148 line=106: sub   x11, x10, x9
+00551633 // PC=0x14c line=107: sll   x12, x10, x5
+00a5a6b3 // PC=0x150 line=108: slt   x13, x11, x10
+00a5b733 // PC=0x154 line=109: sltu  x14, x11, x10
+00c5c7b3 // PC=0x158 line=110: xor   x15, x11, x12
+0067d833 // PC=0x15c line=111: srl   x16, x15, x6
+4055d8b3 // PC=0x160 line=112: sra   x17, x11, x5
+01186933 // PC=0x164 line=113: or    x18, x16, x17
+00f979b3 // PC=0x168 line=114: and   x19, x18, x15
+03702423 // PC=0x16c line=117: sw    x23, 40(x0)
+03802623 // PC=0x170 line=118: sw    x24, 44(x0)
+03902823 // PC=0x174 line=119: sw    x25, 48(x0)
+03a02a23 // PC=0x178 line=120: sw    x26, 52(x0)
+03b02c23 // PC=0x17c line=121: sw    x27, 56(x0)
+03c01e23 // PC=0x180 line=122: sh    x28, 60(x0)
+05d01023 // PC=0x184 line=123: sh    x29, 64(x0)
+05e01223 // PC=0x188 line=124: sh    x30, 68(x0)
+05f00423 // PC=0x18c line=125: sb    x31, 72(x0)
+04100623 // PC=0x190 line=126: sb    x1, 76(x0)
+00700a13 // PC=0x194 line=129: addi  x20, x0, 7
+004a1a13 // PC=0x198 line=130: slli  x20, x20, 4
+013a0ab3 // PC=0x19c line=131: add   x21, x20, x19
+412a8b33 // PC=0x1a0 line=132: sub   x22, x21, x18
+011b4bb3 // PC=0x1a4 line=133: xor   x23, x22, x17
+010bec33 // PC=0x1a8 line=134: or    x24, x23, x16
+00fc7cb3 // PC=0x1ac line=135: and   x25, x24, x15
+1f4cad13 // PC=0x1b0 line=136: slti  x26, x25, 500
+5dcc3d93 // PC=0x1b4 line=137: sltiu x27, x24, 1500
+1b3bce13 // PC=0x1b8 line=138: xori  x28, x23, 0x1b3
+044e6e93 // PC=0x1bc line=139: ori   x29, x28, 0x44
+7ffeff13 // PC=0x1c0 line=140: andi  x30, x29, 0x7ff
+05502823 // PC=0x1c4 line=143: sw    x21, 80(x0)
+05602a23 // PC=0x1c8 line=144: sw    x22, 84(x0)
+05702c23 // PC=0x1cc line=145: sw    x23, 88(x0)
+05802e23 // PC=0x1d0 line=146: sw    x24, 92(x0)
+07902023 // PC=0x1d4 line=147: sw    x25, 96(x0)
+07a01223 // PC=0x1d8 line=148: sh    x26, 100(x0)
+07b01423 // PC=0x1dc line=149: sh    x27, 104(x0)
+07c00623 // PC=0x1e0 line=150: sb    x28, 108(x0)
+07d00823 // PC=0x1e4 line=151: sb    x29, 112(x0)
+07e02a23 // PC=0x1e8 line=152: sw    x30, 116(x0)

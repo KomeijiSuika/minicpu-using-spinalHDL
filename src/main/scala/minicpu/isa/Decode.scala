@@ -24,17 +24,23 @@ class Decode extends Component {
     // branch, jump 信号
     val branchCtrl = out UInt(3 bits) 
     val jumpCtrl = out UInt(2 bits)  
+    // Utype control 信号
+    val utypeCtrl = out UInt(2 bits) // 00: none, 01: LUI, 10: AUIPC
   }
   
   // 默认值，避免 latch
   io.rs1 := Rv32iExtractor.getRs1(io.inst)
   io.rs2 := Rv32iExtractor.getRs2(io.inst)
   io.rd := Rv32iExtractor.getRd(io.inst)
+  // io.rs1 := 0
+  // io.rs2 := 0
+  // io.rd := 0
   io.imm := 0
   io.aluCtrl := AluOp.INVALID
   io.aluSrc := 0
   io.branchCtrl := 0
   io.jumpCtrl := 0
+  io.utypeCtrl := 0
   io.regWriteEnable := False
   io.memWriteEnable := False
   io.loadCtrl := 3
@@ -59,6 +65,10 @@ class Decode extends Component {
   val jNone = U(0, 2 bits)
   val jJal  = U(1, 2 bits)
   val jJalr = U(2, 2 bits)
+
+  val uNone  = U(0, 2 bits)
+  val uLui   = U(1, 2 bits)
+  val uAuipc = U(2, 2 bits)
 
   switch(opcode){
     is(OpType.LOAD) {
@@ -152,20 +162,27 @@ class Decode extends Component {
       io.aluSrc := aluSrcImm
     }
     is(OpType.LUI) {
+      io.rs1 := 0
+      io.rs2 := 0
       io.imm := Rv32iExtractor.getImmU(io.inst)
       io.regWriteEnable := True
       io.aluCtrl := AluOp.ADD
       io.aluSrc := aluSrcImm
+      io.utypeCtrl := uLui
     }
     is(OpType.AUIPC) {
+      io.rs1 := 0
+      io.rs2 := 0
       io.imm := Rv32iExtractor.getImmU(io.inst)
       io.regWriteEnable := True
       io.aluCtrl := AluOp.ADD
       io.aluSrc := aluSrcPc
+      io.utypeCtrl := uAuipc
     }
     default {
       io.branchCtrl := brNone
       io.jumpCtrl := jNone
+      io.utypeCtrl := uNone
     }
   }
 

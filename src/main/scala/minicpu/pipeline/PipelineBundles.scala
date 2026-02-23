@@ -29,6 +29,8 @@ case class idExReg(config: CpuConfig) extends Bundle {
     // branch, jump 信号
     val branchCtrl = UInt(3 bits) 
     val jumpCtrl = UInt(2 bits)  
+    // Utype control 信号
+    val utypeCtrl = UInt(2 bits)
 }
 
 case class exMemReg(config: CpuConfig) extends Bundle {

@@ -18,8 +18,17 @@ import scala.collection.mutable
  */
 class CpuInstructionTest extends AnyFunSuite {
 
-  def createTestSim(testFunc: (SimData) => Unit): Unit = {
+  private def simConfig: SpinalSimConfig = {
     SimConfig
+      .withVerilator
+      .addSimulatorFlag("-CFLAGS")
+      .addSimulatorFlag("-std=c++17")
+      .addSimulatorFlag("-LDFLAGS")
+      .addSimulatorFlag("-std=c++17")
+  }
+
+  def createTestSim(testFunc: (SimData) => Unit): Unit = {
+    simConfig
       .compile(new CpuTop(CpuConfig()))
       .doSim { dut =>
         val simData = new SimData(dut)
@@ -208,6 +217,46 @@ class CpuInstructionTest extends AnyFunSuite {
       sim.printRegisters()
       println(s"x1 (return addr) = 0x${sim.readRegister(1).toHexString} (expected: 0x4)")
       println(s"x2 = ${sim.readRegister(2)} (expected: 2)")
+    }
+  }
+
+  /**
+   * 测试 LUI：x1 = imm << 12
+   * lui x1, 0x12345 -> x1 = 0x12345000
+   */
+  test("Test LUI") {
+    createTestSim { sim =>
+      val instructions = Seq(
+        0x123450b7L // lui x1, 0x12345
+      )
+      sim.loadInstructions(instructions)
+
+      sim.resetCpu()
+      sim.runCycles(12)
+
+      val expected = 0x12345000L
+      println(s"x1 = 0x${sim.readRegister(1).toHexString} (expected: 0x${expected.toHexString})")
+      assert(sim.readRegister(1) == expected, "LUI 指令执行失败")
+    }
+  }
+
+  /**
+   * 测试 AUIPC：x2 = PC + (imm << 12)
+   * auipc x2, 0x1 在 PC=0 处执行，期望 x2=0x1000
+   */
+  test("Test AUIPC") {
+    createTestSim { sim =>
+      val instructions = Seq(
+        0x00001117L // auipc x2, 0x1
+      )
+      sim.loadInstructions(instructions)
+
+      sim.resetCpu()
+      sim.runCycles(12)
+
+      val expected = 0x00001000L
+      println(s"x2 = 0x${sim.readRegister(2).toHexString} (expected: 0x${expected.toHexString})")
+      assert(sim.readRegister(2) == expected, "AUIPC 指令执行失败")
     }
   }
 

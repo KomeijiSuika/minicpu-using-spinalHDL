@@ -42,6 +42,16 @@ object MemhSupport {
 }
 
 class PipelinedRv32iProgramTest extends AnyFunSuite {
+  private def simConfig: SpinalSimConfig = {
+    SimConfig
+      .withWave
+      .withVerilator
+      .addSimulatorFlag("-CFLAGS")
+      .addSimulatorFlag("-std=c++17")
+      .addSimulatorFlag("-LDFLAGS")
+      .addSimulatorFlag("-std=c++17")
+  }
+
   private def requireFileOrCancel(path: Path, hint: String): Unit = {
     if (!Files.exists(path)) {
       throw new TestCanceledException(
@@ -104,12 +114,14 @@ class PipelinedRv32iProgramTest extends AnyFunSuite {
     val outDir = Paths.get("sim_out")
     Files.createDirectories(outDir)
 
-    SimConfig.withWave.compile(new CpuTop(CpuConfig())).doSim { dut =>
-      dut.clockDomain.forkStimulus(period = 10)
+    simConfig.compile(new CpuTop(CpuConfig())).doSim { dut =>
+      dut.io.dbg_regAddr #= 0
+      dut.io.dbg_memAddr #= 0
+      dut.io.dbg_memWriteEnable #= false
+      dut.io.dbg_memWriteData #= 0
 
+      dut.clockDomain.forkStimulus(period = 10)
       dut.clockDomain.assertReset()
-      dut.clockDomain.waitSampling(5)
-      dut.clockDomain.deassertReset()
 
       for (i <- 0 until 1024) setBigInt(dut.instrMem.instrMem, i.toLong, BigInt(0))
       for (i <- 0 until 1024) setBigInt(dut.dataMem.dataMem, i.toLong, BigInt(0))
@@ -119,6 +131,9 @@ class PipelinedRv32iProgramTest extends AnyFunSuite {
       image.foreach { case (idx, word) =>
         if (idx >= 0 && idx < 1024) setBigInt(dut.instrMem.instrMem, idx, word)
       }
+
+      dut.clockDomain.waitSampling(2)
+      dut.clockDomain.deassertReset()
 
       for (_ <- 0 until maxCycles) {
         dut.clockDomain.waitSampling()
@@ -160,9 +175,27 @@ class PipelinedRv32iProgramTest extends AnyFunSuite {
 
   test("Run local RV32I program (.memh) and compare outputs") {
     val defaultMemh = "local-rv32i/asm/itypes.memh"
+    val legacyProgramPath =
+      sys.props.get("rv32i.program")
+        .orElse(sys.env.get("RV32I_PROGRAM"))
+
+    if (
+      legacyProgramPath.exists(_.toLowerCase.endsWith(".s")) &&
+      sys.props.get("rv32i.memh").isEmpty &&
+      sys.env.get("RV32I_MEMH").isEmpty
+    ) {
+      throw new TestCanceledException(
+        s"Detected RV32I_PROGRAM=${legacyProgramPath.get}, but this test only accepts .memh input.\n" +
+          s"Please run: python3 local-rv32i/tools/assemble_memh.py --asm ${legacyProgramPath.get}\n" +
+          s"Then rerun with RV32I_MEMH=<generated .memh>.",
+        0
+      )
+    }
+
     val memhPath =
       sys.props.get("rv32i.memh")
         .orElse(sys.env.get("RV32I_MEMH"))
+        .orElse(legacyProgramPath.filter(_.toLowerCase.endsWith(".memh")))
         .getOrElse(defaultMemh)
 
     val maxCycles =

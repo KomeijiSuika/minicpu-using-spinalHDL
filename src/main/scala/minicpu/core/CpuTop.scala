@@ -122,6 +122,19 @@ class CpuTop(config: CpuConfig) extends Component {
   regFile.io.writeData := wbValue
   regFile.io.writeEnable := memWb.regWriteEnable
 
+  // ID 阶段读数 + WB 同拍旁路（修正 regfile 同拍写回可见性）
+  val idRs1Data = UInt(config.xlen bits)
+  idRs1Data := regFile.io.readData1
+  when(memWb.regWriteEnable && (memWb.rd =/= 0) && (memWb.rd === decode.io.rs1)) {
+    idRs1Data := wbValue
+  }
+
+  val idRs2Data = UInt(config.xlen bits)
+  idRs2Data := regFile.io.readData2
+  when(memWb.regWriteEnable && (memWb.rd =/= 0) && (memWb.rd === decode.io.rs2)) {
+    idRs2Data := wbValue
+  }
+
   //ID/EX 流水线寄存器
   when(exTaken || loadFlushE) {
     idEx := idExReg(config).getZero
@@ -131,8 +144,8 @@ class CpuTop(config: CpuConfig) extends Component {
     idEx.readAddr1 := decode.io.rs1
     idEx.readAddr2 := decode.io.rs2
     idEx.rd := decode.io.rd
-    idEx.regData1 := regFile.io.readData1
-    idEx.regData2 := regFile.io.readData2
+    idEx.regData1 := idRs1Data
+    idEx.regData2 := idRs2Data
     idEx.imm := decode.io.imm
     idEx.regWriteEnable := decode.io.regWriteEnable
     idEx.memWriteEnable := decode.io.memWriteEnable
@@ -142,6 +155,7 @@ class CpuTop(config: CpuConfig) extends Component {
     idEx.aluSrc := decode.io.aluSrc
     idEx.branchCtrl := decode.io.branchCtrl
     idEx.jumpCtrl := decode.io.jumpCtrl
+    idEx.utypeCtrl := decode.io.utypeCtrl
   } // loadStall 时：保持 idEx 不变；但 loadFlushE 会把它清成 bubble
 
   // forward unit
@@ -158,10 +172,25 @@ class CpuTop(config: CpuConfig) extends Component {
   alu.io.srcA := Mux(idEx.aluSrc === 2, idEx.pc, exRs1)
   alu.io.srcB := Mux(idEx.aluSrc === 0, exRs2, idEx.imm)
 
+  val uNone  = U(0, 2 bits)
+  val uLui   = U(1, 2 bits)
+  val uAuipc = U(2, 2 bits)
+
+  val exWbResult = UInt(config.xlen bits)
+  exWbResult := alu.io.result
+  when(idEx.utypeCtrl === uLui) {
+    exWbResult := idEx.imm
+  } elsewhen(idEx.utypeCtrl === uAuipc) {
+    exWbResult := (idEx.pc + idEx.imm).resized
+  } elsewhen(idEx.jumpCtrl =/= 0) {
+    exWbResult := (idEx.pc + 4).resized
+  } 
+
+
   // EX/MEM 流水线寄存器
   exMem.pc := idEx.pc
   exMem.rd := idEx.rd
-  exMem.aluResult := alu.io.result
+  exMem.aluResult := exWbResult
   exMem.storeData := exRs2
   exMem.regWriteEnable := idEx.regWriteEnable
   exMem.memWriteEnable := idEx.memWriteEnable

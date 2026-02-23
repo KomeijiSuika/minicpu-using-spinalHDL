@@ -9,6 +9,10 @@ import sys
 from pathlib import Path
 
 
+def run_cmd(cmd, cwd: Path):
+    return subprocess.run(cmd, cwd=str(cwd), capture_output=True, text=True)
+
+
 def parse_memh_words(memh_path: Path):
     image = {}
     word_index = 0
@@ -52,6 +56,19 @@ def parse_data_mem_dump(mem_dump_path: Path, size_words: int = 1024):
         raise RuntimeError(f"Missing data memory dump from pipelined-rv32i: {mem_dump_path}")
     image = parse_memh_words(mem_dump_path)
     return [(image.get(i, 0) & 0xFFFFFFFF) for i in range(size_words)]
+
+
+def check_verilator_support(pipelined_root: Path):
+    probe = run_cmd(["verilator", "--binary", "--version"], pipelined_root)
+    if probe.returncode != 0:
+        version = run_cmd(["verilator", "--version"], pipelined_root)
+        version_text = (version.stdout or version.stderr).strip()
+        raise RuntimeError(
+            "This script requires Verilator with --binary support (Verilator 5.x).\n"
+            f"Current verilator: {version_text}\n"
+            "Use your conda environment with Verilator 5.044, e.g.\n"
+            "  conda run -n systemverilog python3 local-rv32i/tools/generate_expected.py --memh local-rv32i/asm/itypes.memh --cycles 300"
+        )
 
 
 def ensure_expect_testbench(pipelined_root: Path):
@@ -187,6 +204,12 @@ def build_reference_simulator(workspace: Path, cycles: int):
     if not pipelined_root.exists():
         raise RuntimeError(f"Missing reference repo directory: {pipelined_root}")
 
+    check_verilator_support(pipelined_root)
+
+    obj_dir = pipelined_root / "obj_dir"
+    if obj_dir.exists():
+        shutil.rmtree(obj_dir)
+
     tb_path = ensure_expect_testbench(pipelined_root)
 
     binary_name = "sim_expect_ref"
@@ -199,7 +222,7 @@ def build_reference_simulator(workspace: Path, cycles: int):
 
     print("[generate_expected] Building reference simulator:")
     print("  " + " ".join(build_cmd))
-    build = subprocess.run(build_cmd, cwd=str(pipelined_root), capture_output=True, text=True)
+    build = run_cmd(build_cmd, pipelined_root)
     if build.returncode != 0:
         raise RuntimeError(
             "Verilator build failed for pipelined-rv32i.\n"
@@ -224,7 +247,7 @@ def run_pipelined_reference(pipelined_root: Path, exe_path: Path, memh_path: Pat
             stale_path.unlink()
 
     print(f"[generate_expected] Running reference simulator: {exe_path}")
-    run = subprocess.run([str(exe_path)], cwd=str(pipelined_root), capture_output=True, text=True)
+    run = run_cmd([str(exe_path)], pipelined_root)
     if run.returncode != 0:
         raise RuntimeError(
             "Reference simulator run failed.\n"
@@ -246,7 +269,7 @@ def write_expected(pipelined_root: Path, exe_path: Path, memh: Path, expected_di
     mem_path = expected_dir / f"datamem_{program}.txt"
 
     reg_lines = [f"x{i:02d} = 0x{regs[i] & 0xFFFFFFFF:08x}" for i in range(32)]
-    mem_lines = [f"0x{(i*4):08x} : 0x{data_mem[i] & 0xFFFFFFFF:08x}" for i in range(1024)]
+    mem_lines = [f"0x{(i * 4):08x} : 0x{data_mem[i] & 0xFFFFFFFF:08x}" for i in range(1024)]
 
     reg_path.write_text("\n".join(reg_lines) + "\n", encoding="utf-8")
     mem_path.write_text("\n".join(mem_lines) + "\n", encoding="utf-8")
@@ -256,18 +279,28 @@ def write_expected(pipelined_root: Path, exe_path: Path, memh: Path, expected_di
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate expected regfile/datamem from .memh via pipelined-rv32i SystemVerilog CPU simulation.")
+    parser = argparse.ArgumentParser(
+        description="Generate expected regfile/datamem from .memh via pipelined-rv32i SystemVerilog CPU simulation."
+    )
     parser.add_argument("--workspace", default=".", help="Workspace root (default: current directory)")
     parser.add_argument("--memh", help="Single .memh file path (relative to workspace)")
     parser.add_argument("--all", action="store_true", help="Use all local-rv32i/asm/*.memh")
-    parser.add_argument("--cycles", type=int, default=300, help="Reference simulation cycles passed to testbench MAX_CYCLES (default: 300)")
-    parser.add_argument("--expected-dir", default="local-rv32i/expected", help="Expected dir (default: local-rv32i/expected)")
+    parser.add_argument(
+        "--cycles",
+        type=int,
+        default=300,
+        help="Reference simulation cycles passed to testbench MAX_CYCLES (default: 300)",
+    )
+    parser.add_argument(
+        "--expected-dir",
+        default="local-rv32i/expected",
+        help="Expected dir (default: local-rv32i/expected)",
+    )
     args = parser.parse_args()
 
     workspace = Path(args.workspace).resolve()
     expected_dir = (workspace / args.expected_dir).resolve()
 
-    targets = []
     if args.all:
         targets = [Path(p).resolve() for p in sorted(glob.glob(str(workspace / "local-rv32i" / "asm" / "*.memh")))]
         if not targets:
@@ -283,13 +316,13 @@ def main() -> int:
         print("[generate_expected] ERROR: provide --all or --memh <file.memh>")
         return 1
 
-    fail = 0
     try:
         pipelined_root, exe_path = build_reference_simulator(workspace, args.cycles)
     except Exception as e:
         print(f"[generate_expected] ERROR: failed to build reference simulator -> {e}")
         return 1
 
+    fail = 0
     for memh in targets:
         try:
             write_expected(pipelined_root, exe_path, memh, expected_dir)

@@ -5,6 +5,15 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.core.sim._
 
 class CpuSmokeTest extends AnyFunSuite {
+  private def simConfig: SpinalSimConfig = {
+    SimConfig
+      .withVerilator
+      .addSimulatorFlag("-CFLAGS")
+      .addSimulatorFlag("-std=c++17")
+      .addSimulatorFlag("-LDFLAGS")
+      .addSimulatorFlag("-std=c++17")
+  }
+
   test("CpuTop smoke sim") {
     // SimConfig.compile(): 将 SpinalHDL 设计编译成可仿真的形式
     // - 先把 Scala 代码转换成 Verilog
@@ -12,7 +21,7 @@ class CpuSmokeTest extends AnyFunSuite {
     // - 生成可执行的仿真程序
     // new CpuTop(CpuConfig()): 创建要测试的 CPU 顶层模块实例
     // doSim { dut => ... }: 启动仿真会话，dut 是 Device Under Test（被测设备）的句柄
-    SimConfig.compile(new CpuTop(CpuConfig())).doSim { dut =>
+    simConfig.compile(new CpuTop(CpuConfig())).doSim { dut =>
       
       // forkStimulus(10): 在后台启动时钟生成器
       // - 参数 10 表示时钟周期为 10 个仿真时间单位（5 高 + 5 低）

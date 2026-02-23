@@ -51,7 +51,7 @@ SpinalHDL_minicpu/
 - SBT
 - Scala 2.12（由 `build.sbt` 指定为 2.12.18）
 - Python 3（用于 `local-rv32i/tools/*.py` 工具脚本）
-- Verilator（`generate_expected.py` 会调用 `pipelined-rv32i` 的 SystemVerilog 仿真）
+- Verilator（Spinal 仿真后端）
 
 ## 常用命令
 
@@ -84,6 +84,11 @@ sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 env RV32I_MEMH=local-rv32i/asm/btypes.memh RV32I_MAX_CYCLES=300 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 ```
 
+参数说明：
+
+- 程序文件统一使用 `RV32I_MEMH=<...>.memh`。
+- 测试代码内部已固定 Verilator 使用 `-std=c++17`。
+
 输出结果会写入 `sim_out/`：
 
 - `regfile_<program>.txt`
@@ -102,38 +107,72 @@ python3 local-rv32i/tools/assemble_memh.py --all
 python3 local-rv32i/tools/assemble_memh.py --asm local-rv32i/asm/itypes.s
 ```
 
-### 5) 生成 expected 基线（专用脚本）
+### 5) 用 pipelined 生成 expected（不运行 Spinal 项目）
 
-由 `pipelined-rv32i` 项目里的 SystemVerilog CPU 仿真直接从 `.memh` 生成 expected（不依赖 Spinal 仿真输出）：
+如果你只想生成 `local-rv32i/expected/*.txt` 基线文件，不跑任何 Spinal 测试，可直接使用 `local-rv32i/tools/generate_expected.py`。
+
+先确保依赖：
+
+```fish
+python3 -m pip install bitstring
+verilator --version
+```
+
+先把 `.s` 组装成 `.memh`：
+
+```fish
+python3 local-rv32i/tools/assemble_memh.py --all
+```
+
+仅用 `pipelined-rv32i` 参考模型生成 expected（单文件）：
+
+```fish
+python3 local-rv32i/tools/generate_expected.py --memh local-rv32i/asm/itypes.memh --cycles 300
+```
+
+批量生成全部 `.memh` 的 expected：
 
 ```fish
 python3 local-rv32i/tools/generate_expected.py --all --cycles 300
 ```
 
-单文件模式：
+生成结果位于 `local-rv32i/expected/`：
 
-```fish
-python3 local-rv32i/tools/generate_expected.py --memh local-rv32i/asm/btypes.memh --cycles 300
-```
+- `regfile_<program>.txt`
+- `datamem_<program>.txt`
 
-默认 expected 目录是 `local-rv32i/expected`，可改为自定义目录：
+可选参数：
 
-```fish
-python3 local-rv32i/tools/generate_expected.py --all --expected-dir local-rv32i/expected_custom
-```
+- `--expected-dir local-rv32i/expected`：自定义输出目录
+- `--workspace .`：指定工作区根目录
 
-### 6) 测试 local-rv32i 的全部类型程序
+说明：上述流程只调用 `pipelined-rv32i` 的 SystemVerilog + Verilator 参考仿真，不会运行 `sbt test`、`CpuTop` 或任何 Spinal 仿真。
 
-`local-rv32i/asm/` 里常见的类型包括：
+### 6) 准备 expected 文件（给 Spinal 程序测试使用）
 
-- `itypes.s`
-- `rtypes/irtypes.s`（当前目录中是 `irtypes.s`）
-- `btypes.s`
-- `lstypes.s`
-- `functions.s`
-- `delay.s`
-- `peripherals.s`
-- `peripherals_leds.s`
+程序级测试只做三件事：
+
+1. 加载 `.memh` 到 Spinal CPU 仿真
+2. 导出 `sim_out/regfile_*.txt` 与 `sim_out/datamem_*.txt`
+3. 与 `local-rv32i/expected/` 下同名文件比对
+
+因此在运行测试前，请确保 `local-rv32i/expected/` 中已经有对应程序的：
+
+- `regfile_<program>.txt`
+- `datamem_<program>.txt`
+
+### 7) 测试 local-rv32i 的全部类型程序（.memh）
+
+`local-rv32i/asm/` 里常见的 `.memh` 包括：
+
+- `itypes.memh`
+- `irtypes.memh`
+- `btypes.memh`
+- `lstypes.memh`
+- `functions.memh`
+- `delay.memh`
+- `peripherals.memh`
+- `peripherals_leds.memh`
 
 先安装汇编器依赖（只需一次）：
 
@@ -141,11 +180,10 @@ python3 local-rv32i/tools/generate_expected.py --all --expected-dir local-rv32i/
 python3 -m pip install bitstring
 ```
 
-#### 方式 A：先批量组装 + 生成 expected，再回归比对（推荐）
+#### 方式 A：先批量组装，再回归比对（推荐）
 
 ```fish
 python3 local-rv32i/tools/assemble_memh.py --all
-python3 local-rv32i/tools/generate_expected.py --all --cycles 400
 
 for m in local-rv32i/asm/*.memh
     echo "===== Compare $m ====="
@@ -170,6 +208,8 @@ end
 同时会与 `local-rv32i/expected/` 下同名文件做自动比对（若存在）。
 
 可选：通过 `RV32I_EXPECTED_DIR` 或 `-Drv32i.expectedDir=...` 指定 expected 目录。
+
+说明：`PipelinedRv32iProgramTest` 本身不会调用 `pipelined-rv32i`；它只读取 `local-rv32i/expected/` 做比对。
 
 ## 测试说明
 

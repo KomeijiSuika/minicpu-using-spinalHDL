@@ -1,0 +1,32 @@
+00f00093 // PC=0x0 line=5: addi x1, x0, 15
+00300113 // PC=0x4 line=6: addi x2, x0, 3
+ff800193 // PC=0x8 line=7: addi x3, x0, -8
+00100213 // PC=0xc line=8: addi x4, x0, 1
+00421213 // PC=0x10 line=9: slli x4, x4, 4
+01f00293 // PC=0x14 line=10: addi x5, x0, 31
+00208533 // PC=0x18 line=12: add  x10, x1, x2      # 15 + 3 = 18
+402085b3 // PC=0x1c line=13: sub  x11, x1, x2      # 15 - 3 = 12
+00209633 // PC=0x20 line=14: sll  x12, x1, x2      # 15 << 3
+0011a6b3 // PC=0x24 line=15: slt  x13, x3, x1      # -8 < 15 (signed)
+0011b733 // PC=0x28 line=16: sltu x14, x3, x1      # unsigned compare
+0040c7b3 // PC=0x2c line=17: xor  x15, x1, x4
+00225833 // PC=0x30 line=18: srl  x16, x4, x2
+4021d8b3 // PC=0x34 line=19: sra  x17, x3, x2
+0040e933 // PC=0x38 line=20: or   x18, x1, x4
+0012f9b3 // PC=0x3c line=21: and  x19, x5, x1
+00b50a33 // PC=0x40 line=23: add  x20, x10, x11
+40ca0ab3 // PC=0x44 line=24: sub  x21, x20, x12
+00299b33 // PC=0x48 line=25: sll  x22, x19, x2
+014aabb3 // PC=0x4c line=26: slt  x23, x21, x20
+014abc33 // PC=0x50 line=27: sltu x24, x21, x20
+00fb4cb3 // PC=0x54 line=28: xor  x25, x22, x15
+002cdd33 // PC=0x58 line=29: srl  x26, x25, x2
+402addb3 // PC=0x5c line=30: sra  x27, x21, x2
+01adee33 // PC=0x60 line=31: or   x28, x27, x26
+019e7eb3 // PC=0x64 line=32: and  x29, x28, x25
+018e8f33 // PC=0x68 line=34: add  x30, x29, x24
+417f0fb3 // PC=0x6c line=35: sub  x31, x30, x23
+00030313 // PC=0x70 line=38: addi x6, x6, 0
+00038393 // PC=0x74 line=39: addi x7, x7, 0
+00040413 // PC=0x78 line=40: addi x8, x8, 0
+00048493 // PC=0x7c line=41: addi x9, x9, 0
