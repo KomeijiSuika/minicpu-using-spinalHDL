@@ -1,0 +1,22 @@
+00100093 // PC=0x0 line=6: addi x1, x0, 1
+fff00113 // PC=0x4 line=7: addi x2, x0, -1
+00000f93 // PC=0x8 line=8: addi x31, x0, 0
+00000463 // PC=0xc line=9: beq x0, x0, BEQ_WORKS
+001f8f93 // PC=0x10 line=10: addi x31, x31, 1 # Should never run!
+00100513 // PC=0x14 line=11: BEQ_WORKS: addi x10, x0, 1
+00209463 // PC=0x18 line=12: bne x1, x2, BNE_WORKS
+001f8f93 // PC=0x1c line=13: addi x31, x31, 1 # Should never run!
+00100593 // PC=0x20 line=14: BNE_WORKS: addi x11, x0, 1
+00114463 // PC=0x24 line=15: blt x2, x1, BLT_WORKS
+001f8f93 // PC=0x28 line=16: addi x31, x31, 1 # Should never run!
+00100613 // PC=0x2c line=17: BLT_WORKS: addi x12, x0, 1
+00005463 // PC=0x30 line=18: bge x0, x0, BGE_WORKS
+001f8f93 // PC=0x34 line=19: addi x31, x31, 1 # Should never run!
+00100693 // PC=0x38 line=20: BGE_WORKS: addi x13, x0, 1
+0020e463 // PC=0x3c line=21: bltu x1, x2, BLTU_WORKS
+001f8f93 // PC=0x40 line=22: addi x31, x31, 1 # Should never run!
+00100713 // PC=0x44 line=23: BLTU_WORKS: addi x14, x0, 1
+00117463 // PC=0x48 line=24: bgeu x2, x1, BGEU_WORKS
+001f8f93 // PC=0x4c line=25: addi x31, x31, 1 # Should never run!
+00100793 // PC=0x50 line=26: BGEU_WORKS: addi x15, x0, 1
+00000063 // PC=0x54 line=27: INFINITE_LOOP: beq x0, x0, INFINITE_LOOP

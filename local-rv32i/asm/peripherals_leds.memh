@@ -1,0 +1,83 @@
+300001b7 // PC=0x0 line=3: lui gp, 0x30000
+00300413 // PC=0x4 line=4: addi s0, zero, 3
+00641413 // PC=0x8 line=5: slli s0, s0, 6
+00340433 // PC=0xc line=6: add s0, s0, gp
+0ff00513 // PC=0x10 line=10: addi a0, zero, 255
+00000593 // PC=0x14 line=11: addi a1, zero, 0
+00000613 // PC=0x18 line=12: addi a2, zero, 0
+0e0000ef // PC=0x1c line=13: call SET_RGB
+3e800513 // PC=0x20 line=14: addi a0, zero, 1000
+090000ef // PC=0x24 line=15: call DELAY
+07f00513 // PC=0x28 line=17: addi a0, zero, 127
+00000593 // PC=0x2c line=18: addi a1, zero, 0
+07f00613 // PC=0x30 line=19: addi a2, zero, 127
+0c8000ef // PC=0x34 line=20: call SET_RGB
+3e800513 // PC=0x38 line=21: addi a0, zero, 1000
+078000ef // PC=0x3c line=22: call DELAY
+00000513 // PC=0x40 line=24: addi a0, zero, 0
+00000593 // PC=0x44 line=25: addi a1, zero, 0
+0ff00613 // PC=0x48 line=26: addi a2, zero, 255
+0b0000ef // PC=0x4c line=27: call SET_RGB
+3e800513 // PC=0x50 line=28: addi a0, zero, 1000
+060000ef // PC=0x54 line=29: call DELAY
+00000513 // PC=0x58 line=31: addi a0, zero, 0
+07f00593 // PC=0x5c line=32: addi a1, zero, 127
+07f00613 // PC=0x60 line=33: addi a2, zero, 127
+098000ef // PC=0x64 line=34: call SET_RGB
+3e800513 // PC=0x68 line=35: addi a0, zero, 1000
+048000ef // PC=0x6c line=36: call DELAY
+00000513 // PC=0x70 line=38: addi a0, zero, 0
+0ff00593 // PC=0x74 line=39: addi a1, zero, 255
+00000613 // PC=0x78 line=40: addi a2, zero, 0
+080000ef // PC=0x7c line=41: call SET_RGB
+3e800513 // PC=0x80 line=42: addi a0, zero, 1000
+030000ef // PC=0x84 line=43: call DELAY
+07f00513 // PC=0x88 line=45: addi a0, zero, 127
+07f00593 // PC=0x8c line=46: addi a1, zero, 127
+00000613 // PC=0x90 line=47: addi a2, zero, 0
+068000ef // PC=0x94 line=48: call SET_RGB
+3e800513 // PC=0x98 line=49: addi a0, zero, 1000
+018000ef // PC=0x9c line=50: call DELAY
+00200513 // PC=0xa0 line=52: addi a0, zero, 2
+1f400593 // PC=0xa4 line=53: addi a1, zero, 500
+078000ef // PC=0xa8 line=54: call PLAY_TONE
+028000ef // PC=0xac line=57: call SET_LED0
+f60000e3 // PC=0xb0 line=58: beq zero, zero, MAIN
+00100293 // PC=0xb4 line=61: DELAY: addi t0, x0, 1
+01c29293 // PC=0xb8 line=62: slli t0, t0, 28 # Get MMR base address into register t0.
+00c2a303 // PC=0xbc line=64: lw t1, 12(t0)
+00a303b3 // PC=0xc0 line=66: add t2, t1, a0
+00c2a303 // PC=0xc4 line=67: DELAY_FOR:  lw t1, 12(t0)
+00735463 // PC=0xc8 line=68: bge t1, t2, DELAY_DONE
+ff9ff06f // PC=0xcc line=69: j DELAY_FOR
+00008067 // PC=0xd0 line=70: DELAY_DONE: ret # shorthand for `jr ra`
+00100293 // PC=0xd4 line=74: addi t0, x0, 1 # Get MMR base address into register t0.
+01c29293 // PC=0xd8 line=75: slli t0, t0, 28
+0002a303 // PC=0xdc line=77: lw t1, 0(t0)
+000003b3 // PC=0xe0 line=79: add t2, zero, zero
+00050463 // PC=0xe4 line=80: beq a0, zero, LED0_OFF # if LED 0 is off, skip next instruction.
+00f00393 // PC=0xe8 line=82: addi t2, zero, 15 # else case
+01c39393 // PC=0xec line=83: LED0_OFF: slli t2, t2, 28
+00734333 // PC=0xf0 line=85: xor t1, t1, t2
+0062a023 // PC=0xf4 line=87: sw t1, 0(t0)
+00008067 // PC=0xf8 line=88: ret # shorthand for `jr ra`
+00100293 // PC=0xfc line=97: addi t0, zero, 1
+01c29293 // PC=0x100 line=98: slli t0, t0, 28 # MMR Base Address
+00a06333 // PC=0x104 line=99: or t1, zero, a0
+00831313 // PC=0x108 line=100: slli t1, t1, 8
+00b36333 // PC=0x10c line=101: or t1, t1, a1
+00831313 // PC=0x110 line=102: slli t1, t1, 8
+00c36333 // PC=0x114 line=103: or t1, t1, a2
+0062a023 // PC=0x118 line=104: sw t1, 0(t0)
+00008067 // PC=0x11c line=105: ret
+00000e93 // PC=0x120 line=108: addi t4, zero, 0 # Iteration counter
+0ff00f13 // PC=0x124 line=109: addi t5, zero, 0xFF # To enable all pins
+00100f93 // PC=0x128 line=110: addi t6, zero, 1 # MMR Base Address
+01cf9f93 // PC=0x12c line=111: slli t6, t6, 28
+01efa223 // PC=0x130 line=112: sw t5, 4(t6) # Set GPIO mode
+01efa423 // PC=0x134 line=113: PULSE_LOOP: sw t5, 8(t6) # Set high
+f7dff0ef // PC=0x138 line=114: call DELAY
+000fa423 // PC=0x13c line=115: sw zero, 8(t6) # Set low
+001e8e93 // PC=0x140 line=116: addi t4, t4, 1
+febec8e3 // PC=0x144 line=117: blt t4, a1, PULSE_LOOP
+00008067 // PC=0x148 line=118: ret

@@ -1,0 +1,23 @@
+00300193 // PC=0x0 line=4: addi gp, zero, 3
+01c19193 // PC=0x4 line=5: slli gp, gp, 28
+20018113 // PC=0x8 line=6: addi sp, gp, 512
+01100293 // PC=0xc line=7: addi t0, zero, 17
+fe512e23 // PC=0x10 line=9: sw t0, -4(sp)
+01128293 // PC=0x14 line=10: addi t0, t0, 17
+fe512c23 // PC=0x18 line=11: sw t0, -8(sp)
+01128293 // PC=0x1c line=12: addi t0, t0, 17
+fe512a23 // PC=0x20 line=13: sw t0, -12(sp)
+01128293 // PC=0x24 line=14: addi t0, t0, 17
+fe512823 // PC=0x28 line=15: sw t0, -16(sp)
+ff012283 // PC=0x2c line=17: lw t0, -16(sp)
+0051a023 // PC=0x30 line=18: sw t0, 0(gp)
+06502c23 // PC=0x34 line=19: sw t0, 120(zero)
+ff412303 // PC=0x38 line=20: lw t1, -12(sp)
+0061a223 // PC=0x3c line=21: sw t1, 4(gp)
+06602e23 // PC=0x40 line=22: sw t1, 124(zero)
+ff812383 // PC=0x44 line=23: lw t2, -8(sp)
+0071a423 // PC=0x48 line=24: sw t2, 8(gp)
+08702023 // PC=0x4c line=25: sw t2, 128(zero)
+ffc12e03 // PC=0x50 line=26: lw t3, -4(sp)
+01c1a623 // PC=0x54 line=27: sw t3, 12(gp)
+09c02223 // PC=0x58 line=28: sw t3, 132(zero)

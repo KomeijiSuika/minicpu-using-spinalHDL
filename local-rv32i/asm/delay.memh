@@ -1,0 +1,17 @@
+300001b7 // PC=0x0 line=3: lui gp, 0x30000
+00300413 // PC=0x4 line=4: addi s0, zero, 3
+00641413 // PC=0x8 line=5: slli s0, s0, 6
+00340433 // PC=0xc line=6: add s0, s0, gp
+000004b3 // PC=0x10 line=7: add s1, zero, zero
+00100513 // PC=0x14 line=10: addi a0, zero, 1
+00c000ef // PC=0x18 line=11: call DELAY
+00148493 // PC=0x1c line=12: addi s1, s1, 1
+fe000ae3 // PC=0x20 line=13: beq zero, zero, MAIN
+00100293 // PC=0x24 line=16: DELAY: addi t0, x0, 1
+01c29293 // PC=0x28 line=17: slli t0, t0, 28 # Get MMR base address into register t0.
+00c2a303 // PC=0x2c line=19: lw t1, 12(t0)
+00a303b3 // PC=0x30 line=21: add t2, t1, a0
+00c2a303 // PC=0x34 line=22: DELAY_FOR:  lw t1, 12(t0)
+00735463 // PC=0x38 line=23: bge t1, t2, DELAY_DONE
+ff9ff06f // PC=0x3c line=24: j DELAY_FOR
+00008067 // PC=0x40 line=25: DELAY_DONE: ret # shorthand for `jr ra`
