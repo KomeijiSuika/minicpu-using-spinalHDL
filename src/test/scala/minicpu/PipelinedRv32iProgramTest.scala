@@ -123,6 +123,61 @@ class PipelinedRv32iProgramTest extends AnyFunSuite {
     (code, log.toString())
   }
 
+  private def firstDiffIndex(a: Seq[String], b: Seq[String]): Int = {
+    val n = Math.min(a.length, b.length)
+    var i = 0
+    while (i < n) {
+      if (a(i) != b(i)) return i
+      i += 1
+    }
+    if (a.length != b.length) n else -1
+  }
+
+  /**
+   * 写出当前仿真结果，并根据 expected 文件进行自动比对。
+   *
+   * 策略：
+   * - expected 存在：逐行比较，不一致则测试失败。
+   * - expected 不存在且允许生成：将当前结果写为 expected。
+   * - expected 不存在且不允许生成：抛出提示，让用户先生成 expected。
+   */
+  private def writeAndVerifyAgainstExpected(
+      kind: String,
+      programName: String,
+      lines: Seq[String],
+      outDir: Path,
+      expectedDir: Path,
+      generateExpectedIfMissing: Boolean
+  ): Unit = {
+    val outPath = outDir.resolve(s"${kind}_${programName}.txt")
+    Files.write(outPath, lines.asJava, StandardCharsets.UTF_8)
+
+    val expectedPath = expectedDir.resolve(s"${kind}_${programName}.txt")
+    if (!Files.exists(expectedPath)) {
+      if (generateExpectedIfMissing) {
+        Files.createDirectories(expectedDir)
+        Files.write(expectedPath, lines.asJava, StandardCharsets.UTF_8)
+        println(s"[PipelinedRv32iProgramTest] generated expected: $expectedPath")
+      } else {
+        throw new TestCanceledException(
+          s"Missing expected file: $expectedPath\n" +
+            s"Run once with -Drv32i.genExpected=true (or RV32I_GEN_EXPECTED=true) to generate baseline.",
+          0
+        )
+      }
+    } else {
+      val expected = Files.readAllLines(expectedPath, StandardCharsets.UTF_8).asScala.toSeq
+      val diff = firstDiffIndex(lines, expected)
+      assert(
+        diff == -1,
+        s"Mismatch in $kind for program '$programName' at line ${diff + 1}.\n" +
+          s"actual  : ${if (diff >= 0 && diff < lines.length) lines(diff) else "<no line>"}\n" +
+          s"expected: ${if (diff >= 0 && diff < expected.length) expected(diff) else "<no line>"}\n" +
+          s"actual file  : $outPath\nexpected file: $expectedPath"
+      )
+    }
+  }
+
   /**
    * 把 .s 汇编文件转换为 .memh。
    *
@@ -221,7 +276,12 @@ class PipelinedRv32iProgramTest extends AnyFunSuite {
    * @param memh .memh 文件路径（包含机器码的十六进制文本文件）
    * @param maxCycles 最大运行周期数
    */
-  private def runProgram(memh: Path, maxCycles: Int): Unit = {
+  private def runProgram(
+      memh: Path,
+      maxCycles: Int,
+      expectedDir: Path,
+      generateExpectedIfMissing: Boolean
+  ): Unit = {
     // 步骤 1：检查 .memh 文件是否存在
     requireFileOrCancel(
       memh,
@@ -273,9 +333,15 @@ class PipelinedRv32iProgramTest extends AnyFunSuite {
         val v = getBigInt(dut.regFile.regFile, i.toLong)
         f"x$i%02d = 0x${MemhSupport.hex32(v)}"
       }
-      // 写入到 sim_out/regfile_<程序名>.txt
-      val regPath = outDir.resolve(s"regfile_$programName.txt")
-      Files.write(regPath, regLines.asJava, StandardCharsets.UTF_8)
+      // 写入并比对寄存器快照
+      writeAndVerifyAgainstExpected(
+        kind = "regfile",
+        programName = programName,
+        lines = regLines,
+        outDir = outDir,
+        expectedDir = expectedDir,
+        generateExpectedIfMissing = generateExpectedIfMissing
+      )
 
       // 步骤 9：导出数据内存状态到文件
       // 读取所有 1024 个字的数据内存
@@ -284,19 +350,27 @@ class PipelinedRv32iProgramTest extends AnyFunSuite {
         val v = getBigInt(dut.dataMem.dataMem, i.toLong)
         f"0x$addr%08x : 0x${MemhSupport.hex32(v)}"
       }
-      // 写入到 sim_out/datamem_<程序名>.txt
-      val memPath = outDir.resolve(s"datamem_$programName.txt")
-      Files.write(memPath, memLines.asJava, StandardCharsets.UTF_8)
+      // 写入并比对数据内存快照
+      writeAndVerifyAgainstExpected(
+        kind = "datamem",
+        programName = programName,
+        lines = memLines,
+        outDir = outDir,
+        expectedDir = expectedDir,
+        generateExpectedIfMissing = generateExpectedIfMissing
+      )
 
       // 步骤 10：输出测试信息
       println(s"[PipelinedRv32iProgramTest] program=$memh cycles=$maxCycles")
+      val regPath = outDir.resolve(s"regfile_$programName.txt")
+      val memPath = outDir.resolve(s"datamem_$programName.txt")
       println(s"[PipelinedRv32iProgramTest] reg dump : $regPath")
       println(s"[PipelinedRv32iProgramTest] mem dump : $memPath")
+      println(s"[PipelinedRv32iProgramTest] expected dir: $expectedDir")
       
-      // 验证方式：手动检查输出文件
-      // - 查看 sim_out/regfile_itypes.txt 检查寄存器值是否正确
-      // - 查看 sim_out/datamem_itypes.txt 检查内存值是否正确
-      // - 对比预期结果和实际结果
+      // 验证方式：自动比较
+      // - 若 expected 存在：自动逐行比对，不一致直接失败
+      // - 若 expected 不存在且开启生成：自动生成 expected
     }
   }
 
@@ -337,10 +411,29 @@ class PipelinedRv32iProgramTest extends AnyFunSuite {
         .map(_.toInt)
         .getOrElse(200)
 
+    // 期望结果目录（默认 local-rv32i/expected）
+    val expectedDir = Paths.get(
+      sys.props.get("rv32i.expectedDir")
+        .orElse(sys.env.get("RV32I_EXPECTED_DIR"))
+        .getOrElse("local-rv32i/expected")
+    )
+
+    // 若 expected 缺失，是否自动生成（默认 false，避免无意把错误结果固化成“正确结果”）
+    val generateExpectedIfMissing =
+      sys.props.get("rv32i.genExpected")
+        .orElse(sys.env.get("RV32I_GEN_EXPECTED"))
+        .exists(_.equalsIgnoreCase("true"))
+
     // 打印“输入参数 -> 最终使用的 memh”映射，方便确认自动汇编是否生效
     println(s"[PipelinedRv32iProgramTest] requested input=$programInput resolved memh=$memhPath")
+    println(s"[PipelinedRv32iProgramTest] expectedDir=$expectedDir genExpected=$generateExpectedIfMissing")
     
     // 运行程序（如果传入 .s，会先自动汇编成 sim_out/generated_memh/*.memh）
-    runProgram(memhPath, maxCycles = maxCycles)
+    runProgram(
+      memh = memhPath,
+      maxCycles = maxCycles,
+      expectedDir = expectedDir,
+      generateExpectedIfMissing = generateExpectedIfMissing
+    )
   }
 }

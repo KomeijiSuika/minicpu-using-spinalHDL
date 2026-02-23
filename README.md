@@ -89,6 +89,30 @@ sbt -Drv32i.memh=local-rv32i/asm/itypes.memh -Drv32i.maxCycles=300 "testOnly min
 env RV32I_PROGRAM=local-rv32i/asm/btypes.s RV32I_MAX_CYCLES=300 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 ```
 
+程序级测试现在支持“expected 基线 + 自动比对”：
+
+- 默认 expected 目录：`local-rv32i/expected`
+- 默认行为：若 expected 存在则自动逐行比对（`regfile` + `datamem`）
+- 若 expected 缺失：测试会提示先生成 expected
+
+首次生成 expected（基线）：
+
+```fish
+env RV32I_PROGRAM=local-rv32i/asm/peripherals.s RV32I_MAX_CYCLES=300 RV32I_GEN_EXPECTED=true sbt "testOnly minicpu.PipelinedRv32iProgramTest"
+```
+
+后续验证（自动比对，不一致会直接失败）：
+
+```fish
+env RV32I_PROGRAM=local-rv32i/asm/peripherals.s RV32I_MAX_CYCLES=300 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
+```
+
+可自定义 expected 目录：
+
+```fish
+env RV32I_PROGRAM=local-rv32i/asm/peripherals.s RV32I_EXPECTED_DIR=local-rv32i/expected_custom sbt "testOnly minicpu.PipelinedRv32iProgramTest"
+```
+
 输出结果会写入 `sim_out/`：
 
 - `regfile_<program>.txt`
@@ -150,11 +174,13 @@ end
 - `regfile_<program>.txt`
 - `datamem_<program>.txt`
 
+同时会与 `local-rv32i/expected/` 下同名文件做自动比对（若存在）。
+
 ## 测试说明
 
 - `CpuSmokeTest`：最小冒烟仿真，验证顶层可编译与时钟复位流程
 - `CpuInstructionTest`：指令级示例测试（ADDI/ADD/SUB/LW/SW/BEQ/JAL/JALR 等）
-- `PipelinedRv32iProgramTest`：加载 `.memh` 程序，运行后导出寄存器与数据存储器快照
+- `PipelinedRv32iProgramTest`：加载 `.memh/.s` 程序，运行后导出寄存器与数据存储器快照，并可与 expected 自动比对
 
 ## 备注
 
