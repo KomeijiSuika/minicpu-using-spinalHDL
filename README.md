@@ -50,7 +50,8 @@ SpinalHDL_minicpu/
 - JDK 8+
 - SBT
 - Scala 2.12（由 `build.sbt` 指定为 2.12.18）
-- Python 3（仅在使用 `local-rv32i/assembler.py` 时需要）
+- Python 3（用于 `local-rv32i/tools/*.py` 工具脚本）
+- Verilator（`generate_expected.py` 会调用 `pipelined-rv32i` 的 SystemVerilog 仿真）
 
 ## 常用命令
 
@@ -77,40 +78,10 @@ sbt test
 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 ```
 
-指定程序与周期数：
+用环境变量传入 `.memh` 与周期：
 
 ```fish
-sbt -Drv32i.memh=local-rv32i/asm/itypes.memh -Drv32i.maxCycles=300 "testOnly minicpu.PipelinedRv32iProgramTest"
-```
-
-也支持直接传 `.s`（测试会自动调用 `local-rv32i/assembler.py` 先生成 `.memh`）：
-
-```fish
-env RV32I_PROGRAM=local-rv32i/asm/btypes.s RV32I_MAX_CYCLES=300 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
-```
-
-程序级测试现在支持“expected 基线 + 自动比对”：
-
-- 默认 expected 目录：`local-rv32i/expected`
-- 默认行为：若 expected 存在则自动逐行比对（`regfile` + `datamem`）
-- 若 expected 缺失：测试会提示先生成 expected
-
-首次生成 expected（基线）：
-
-```fish
-env RV32I_PROGRAM=local-rv32i/asm/peripherals.s RV32I_MAX_CYCLES=300 RV32I_GEN_EXPECTED=true sbt "testOnly minicpu.PipelinedRv32iProgramTest"
-```
-
-后续验证（自动比对，不一致会直接失败）：
-
-```fish
-env RV32I_PROGRAM=local-rv32i/asm/peripherals.s RV32I_MAX_CYCLES=300 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
-```
-
-可自定义 expected 目录：
-
-```fish
-env RV32I_PROGRAM=local-rv32i/asm/peripherals.s RV32I_EXPECTED_DIR=local-rv32i/expected_custom sbt "testOnly minicpu.PipelinedRv32iProgramTest"
+env RV32I_MEMH=local-rv32i/asm/btypes.memh RV32I_MAX_CYCLES=300 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 ```
 
 输出结果会写入 `sim_out/`：
@@ -122,10 +93,36 @@ env RV32I_PROGRAM=local-rv32i/asm/peripherals.s RV32I_EXPECTED_DIR=local-rv32i/e
 
 ```fish
 python3 -m pip install bitstring
-python3 local-rv32i/assembler.py local-rv32i/asm/itypes.s -o local-rv32i/asm/itypes.memh
+python3 local-rv32i/tools/assemble_memh.py --all
 ```
 
-### 5) 测试 local-rv32i 的全部类型程序
+单文件模式：
+
+```fish
+python3 local-rv32i/tools/assemble_memh.py --asm local-rv32i/asm/itypes.s
+```
+
+### 5) 生成 expected 基线（专用脚本）
+
+由 `pipelined-rv32i` 项目里的 SystemVerilog CPU 仿真直接从 `.memh` 生成 expected（不依赖 Spinal 仿真输出）：
+
+```fish
+python3 local-rv32i/tools/generate_expected.py --all --cycles 300
+```
+
+单文件模式：
+
+```fish
+python3 local-rv32i/tools/generate_expected.py --memh local-rv32i/asm/btypes.memh --cycles 300
+```
+
+默认 expected 目录是 `local-rv32i/expected`，可改为自定义目录：
+
+```fish
+python3 local-rv32i/tools/generate_expected.py --all --expected-dir local-rv32i/expected_custom
+```
+
+### 6) 测试 local-rv32i 的全部类型程序
 
 `local-rv32i/asm/` 里常见的类型包括：
 
@@ -144,28 +141,24 @@ python3 local-rv32i/assembler.py local-rv32i/asm/itypes.s -o local-rv32i/asm/ity
 python3 -m pip install bitstring
 ```
 
-#### 方式 A：直接遍历所有 `.s`（推荐）
+#### 方式 A：先批量组装 + 生成 expected，再回归比对（推荐）
 
 ```fish
-for s in local-rv32i/asm/*.s
-    echo "===== Testing $s ====="
-    env RV32I_PROGRAM="$s" RV32I_MAX_CYCLES=400 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
+python3 local-rv32i/tools/assemble_memh.py --all
+python3 local-rv32i/tools/generate_expected.py --all --cycles 400
+
+for m in local-rv32i/asm/*.memh
+    echo "===== Compare $m ====="
+    env RV32I_MEMH="$m" RV32I_MAX_CYCLES=400 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 end
 ```
 
-说明：每个 `.s` 会先自动汇编到 `sim_out/generated_memh/*.memh`，再运行仿真。
-
-#### 方式 B：先手动批量生成 `.memh`，再逐个测试
+#### 方式 B：已存在 expected 时直接回归比对
 
 ```fish
-for s in local-rv32i/asm/*.s
-    set m (string replace -r '\\.s$' '.memh' -- $s)
-    python3 local-rv32i/assembler.py $s -o $m
-end
-
 for m in local-rv32i/asm/*.memh
-    echo "===== Testing $m ====="
-    sbt -Drv32i.memh=$m -Drv32i.maxCycles=400 "testOnly minicpu.PipelinedRv32iProgramTest"
+    echo "===== Compare $m ====="
+    env RV32I_MEMH="$m" RV32I_MAX_CYCLES=400 sbt "testOnly minicpu.PipelinedRv32iProgramTest"
 end
 ```
 
@@ -176,11 +169,13 @@ end
 
 同时会与 `local-rv32i/expected/` 下同名文件做自动比对（若存在）。
 
+可选：通过 `RV32I_EXPECTED_DIR` 或 `-Drv32i.expectedDir=...` 指定 expected 目录。
+
 ## 测试说明
 
 - `CpuSmokeTest`：最小冒烟仿真，验证顶层可编译与时钟复位流程
 - `CpuInstructionTest`：指令级示例测试（ADDI/ADD/SUB/LW/SW/BEQ/JAL/JALR 等）
-- `PipelinedRv32iProgramTest`：加载 `.memh/.s` 程序，运行后导出寄存器与数据存储器快照，并可与 expected 自动比对
+- `PipelinedRv32iProgramTest`：加载 `.memh` 程序，运行后导出寄存器与数据存储器快照，并与 expected 自动比对
 
 ## 备注
 
