@@ -23,31 +23,59 @@ class DataMem(config: CpuConfig) extends Component {
     val dbgWriteData = in UInt(config.xlen bits)
     val dbgReadData = out UInt(config.xlen bits)
   }
+
   val dataMem = Mem(UInt(config.xlen bits), 1024)
   dataMem.simPublic() // allow testbench to dump full memory contents
 
   // Read helpers (byte/half selection inside a 32-bit word)
-  val wordAddr = (io.addr >> 2).resized
-  val word     = dataMem(wordAddr)
+  val wordAddr   = (io.addr >> 2).resized
+  val word       = dataMem(wordAddr)
+  val byteOffset = io.addr(1 downto 0)
+  val shiftBits  = (byteOffset ## U(0, 3 bits)).asUInt.resized
+  val shiftedWord = (word |>> shiftBits).resized
+
+  val lbVal  = shiftedWord(7 downto 0).asSInt.resize(config.xlen).asUInt
+  val lhVal  = shiftedWord(15 downto 0).asSInt.resize(config.xlen).asUInt
+  val lbuVal = shiftedWord(7 downto 0).resized
+  val lhuVal = shiftedWord(15 downto 0).resized
+
+  val halfAligned = io.addr(0) === False
+  val wordAligned = io.addr(1 downto 0) === 0
+
   val dbgWordAddr = (io.dbgAddr >> 2).resized
   io.dbgReadData := dataMem(dbgWordAddr)
 
   switch(io.loadCtrl) {
-    is(Funct3Load.LB)  { io.readData := word(7 downto 0).asSInt.resize(config.xlen).asUInt }   // LB
-    is(Funct3Load.LH)  { io.readData := word(15 downto 0).asSInt.resize(config.xlen).asUInt }  // LH
-    is(Funct3Load.LW)  { io.readData := word }                                               // LW
-    is(Funct3Load.LBU) { io.readData := word(7 downto 0).resized }                 // LBU
-    is(Funct3Load.LHU) { io.readData := word(15 downto 0).resized }                // LHU
+    is(Funct3Load.LB)  { io.readData := lbVal }                            // LB
+    is(Funct3Load.LH)  { io.readData := Mux(halfAligned, lhVal, U(0)) }    // LH
+    is(Funct3Load.LW)  { io.readData := Mux(wordAligned, word, U(0)) }     // LW
+    is(Funct3Load.LBU) { io.readData := lbuVal }                           // LBU
+    is(Funct3Load.LHU) { io.readData := Mux(halfAligned, lhuVal, U(0)) }   // LHU
     default { io.readData := 0 }
   }
 
   when(io.dbgWriteEnable) {
     dataMem(dbgWordAddr) := io.dbgWriteData
   } elsewhen(io.memWriteEnable) {
+    val byteMask = (U(0xFF, config.xlen bits) |<< shiftBits).resized
+    val halfMask = (U(0xFFFF, config.xlen bits) |<< shiftBits).resized
+    val byteData = (io.writeData(7 downto 0).resize(config.xlen) |<< shiftBits).resized
+    val halfData = (io.writeData(15 downto 0).resize(config.xlen) |<< shiftBits).resized
+
     switch(io.storeCtrl) {
-      is(Funct3Store.SB) { dataMem(wordAddr) := io.writeData(7 downto 0).resize(config.xlen) }   // SB
-      is(Funct3Store.SH) { dataMem(wordAddr) := io.writeData(15 downto 0).resize(config.xlen) } // SH
-      is(Funct3Store.SW) { dataMem(wordAddr) := io.writeData }                             // SW
+      is(Funct3Store.SB) {
+        dataMem(wordAddr) := (word & ~byteMask) | (byteData & byteMask)
+      } // SB
+      is(Funct3Store.SH) {
+        when(halfAligned) {
+          dataMem(wordAddr) := (word & ~halfMask) | (halfData & halfMask)
+        }
+      } // SH
+      is(Funct3Store.SW) {
+        when(wordAligned) {
+          dataMem(wordAddr) := io.writeData
+        }
+      } // SW
       default {}
     }
   }
