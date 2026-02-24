@@ -1,0 +1,27 @@
+
+00a00193 // PC=0x8 line=10: addi  x3, x0, 10        # Immediate addition
+00219213 // PC=0xc line=11: slli  x4, x3, 2         # Logical left shift immediate
+0011d293 // PC=0x10 line=12: srli  x5, x3, 1         # Logical right shift immediate
+4011d313 // PC=0x14 line=13: srai  x6, x3, 1         # Arithmetic right shift immediate
+00f1f393 // PC=0x18 line=14: andi  x7, x3, 0xF       # AND immediate
+00f1e413 // PC=0x1c line=15: ori   x8, x3, 0xF       # OR immediate
+00f1c493 // PC=0x20 line=16: xori  x9, x3, 0xF       # XOR immediate
+0051a513 // PC=0x24 line=17: slti  x10, x3, 5        # Set less than immediate
+0051b593 // PC=0x28 line=18: sltiu x11, x3, 5        # Set less than immediate unsigned
+00418633 // PC=0x2c line=21: add   x12, x3, x4       # Addition
+403206b3 // PC=0x30 line=22: sub   x13, x4, x3       # Subtraction
+00419733 // PC=0x34 line=23: sll   x14, x3, x4       # Logical left shift
+003257b3 // PC=0x38 line=24: srl   x15, x4, x3       # Logical right shift
+40325833 // PC=0x3c line=25: sra   x16, x4, x3       # Arithmetic right shift
+0041f8b3 // PC=0x40 line=26: and   x17, x3, x4       # AND
+0041e933 // PC=0x44 line=27: or    x18, x3, x4       # OR
+0041c9b3 // PC=0x48 line=28: xor   x19, x3, x4       # XOR
+0041aa33 // PC=0x4c line=29: slt   x20, x3, x4       # Set less than
+0041bab3 // PC=0x50 line=30: sltu  x21, x3, x4       # Set less than unsigned
+00312023 // PC=0x54 line=33: sw    x3, 0(x2)         # Store word
+00411223 // PC=0x58 line=34: sh    x4, 4(x2)         # Store halfword
+00510323 // PC=0x5c line=35: sb    x5, 6(x2)         # Store byte
+00a00b13 // PC=0x60 line=38: addi  x22, x0, 10       # Loop counter
+fffb0b13 // PC=0x64 line=40: addi  x22, x22, -1      # Decrement counter
+fe0b1ee3 // PC=0x68 line=41: bne   x22, x0, loop     # Branch if not zero
+00008067 // PC=0x6c line=44: ret

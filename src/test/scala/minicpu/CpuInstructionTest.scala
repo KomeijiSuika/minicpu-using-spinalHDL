@@ -241,6 +241,28 @@ class CpuInstructionTest extends AnyFunSuite {
   }
 
   /**
+   * 测试 LUI 边界：
+   * 1) 写 x0 必须被忽略
+   * 2) imm[31:12] 全 1 时高位应正确保留
+   */
+  test("Test LUI edge cases") {
+    createTestSim { sim =>
+      val instructions = Seq(
+        0xabcde037L, // lui x0, 0xABCDE (应被忽略，x0 始终为 0)
+        0xfffff2b7L  // lui x5, 0xFFFFF -> x5 = 0xFFFFF000
+      )
+      sim.loadInstructions(instructions)
+
+      sim.resetCpu()
+      sim.runCycles(16)
+
+      val expectedX5 = 0xFFFFF000L
+      assert(sim.readRegister(0) == 0L, "LUI 不应写入 x0")
+      assert(sim.readRegister(5) == expectedX5, "LUI 高位立即数拼接错误")
+    }
+  }
+
+  /**
    * 测试 AUIPC：x2 = PC + (imm << 12)
    * auipc x2, 0x1 在 PC=0 处执行，期望 x2=0x1000
    */
@@ -260,6 +282,80 @@ class CpuInstructionTest extends AnyFunSuite {
     }
   }
 
+  /**
+   * 测试 AUIPC 在非零 PC 处执行：
+   * PC=4 执行 auipc x3, 0x1，期望 x3 = 0x1004
+   */
+  test("Test AUIPC with non-zero PC") {
+    createTestSim { sim =>
+      val instructions = Seq(
+        0x00000013L, // nop (addi x0, x0, 0), 占用 PC=0
+        0x00001197L  // auipc x3, 0x1，在 PC=4 执行
+      )
+      sim.loadInstructions(instructions)
+
+      sim.resetCpu()
+      sim.runCycles(16)
+
+      val expected = 0x00001004L
+      assert(sim.readRegister(3) == expected, "AUIPC 应使用当前指令 PC（不是 PC+4）")
+    }
+  }
+
+  /**
+   * 测试 AUIPC 负偏移（U 立即数高位全 1）：
+   * 在 PC=8 处执行 auipc x4, 0xFFFFF，期望 x4 = 0xFFFFF008
+   */
+  test("Test AUIPC negative upper immediate") {
+    createTestSim { sim =>
+      val instructions = Seq(
+        0x00000013L, // nop, PC=0
+        0x00000013L, // nop, PC=4
+        0xfffff217L  // auipc x4, 0xFFFFF，在 PC=8 执行
+      )
+      sim.loadInstructions(instructions)
+
+      sim.resetCpu()
+      sim.runCycles(20)
+
+      val expected = 0xFFFFF008L
+      assert(sim.readRegister(4) == expected, "AUIPC 立即数与 PC 相加结果错误")
+    }
+  }
+
+  test("LUI + AUIPC integration edge cases") {
+    createTestSim { sim =>
+      // instructions loaded sequentially at addresses 0x00, 0x04, 0x08, ...
+      val instructions = Seq(
+        0xabcde037L, // 0x00: lui x0, 0xABCDE  (写 x0 应被忽略)
+        0xfffff2b7L, // 0x04: lui x5, 0xFFFFF   (x5 = 0xFFFFF000)
+        0x00001317L, // 0x08: auipc x6, 0x00001 (x6 = PC(0x08) + 0x1000 = 0x1008)
+        0xfffff397L, // 0x0C: auipc x7, 0xFFFFF  (x7 = 0x0C + 0xFFFFF000 = 0xFFFFF00C)
+        0x00628433L, // 0x10: add x8, x5, x6     (x8 = x5 + x6)
+        0x00734b33L  // 0x14: add x9, x7, x8     (x9 = x7 + x8)
+      )
+
+      sim.loadInstructions(instructions)
+      sim.resetCpu()
+      // 运行足够周期，让所有指令完成（包括 pipeline flush / memory 等）
+      sim.runCycles(32)
+
+      // 期望值（基于 PC 起始为 0）
+      val expX0 = 0x00000000L
+      val expX5 = 0xFFFFF000L
+      val expX6 = 0x00001008L
+      val expX7 = 0xFFFFF00CL
+      val expX8 = 0x00000008L
+      val expX9 = 0xFFFFF014L
+
+      assert(sim.readRegister(0) == expX0, "LUI 写 x0 应被忽略，x0 必须为 0")
+      assert(sim.readRegister(5) == expX5, "LUI high-imm 拼接错误（x5）")
+      assert(sim.readRegister(6) == expX6, "AUIPC 计算错误（x6）")
+      assert(sim.readRegister(7) == expX7, "AUIPC 计算错误（x7），PC 加 imm 显式校验失败")
+      assert(sim.readRegister(8) == expX8, "add x8 = x5 + x6 的结果不正确")
+      assert(sim.readRegister(9) == expX9, "add x9 = x7 + x8 的结果不正确")
+    }
+  }
   /**
    * 自定义测试：用户可在此添加自己的机器码
    */

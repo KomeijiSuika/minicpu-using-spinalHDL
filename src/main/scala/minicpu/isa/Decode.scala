@@ -12,6 +12,8 @@ class Decode extends Component {
 
     // out
     val rs1, rs2, rd = out UInt(5 bits)
+    val useRs1 = out Bool()
+    val useRs2 = out Bool()
     val imm = out UInt(32 bits)
     val regWriteEnable = out Bool()
     // memory control 信号
@@ -32,6 +34,8 @@ class Decode extends Component {
   io.rs1 := Rv32iExtractor.getRs1(io.inst)
   io.rs2 := Rv32iExtractor.getRs2(io.inst)
   io.rd := Rv32iExtractor.getRd(io.inst)
+  io.useRs1 := False
+  io.useRs2 := False
   // io.rs1 := 0
   // io.rs2 := 0
   // io.rd := 0
@@ -72,6 +76,7 @@ class Decode extends Component {
 
   switch(opcode){
     is(OpType.LOAD) {
+      io.useRs1 := True
       io.imm := Rv32iExtractor.getImm12I(io.inst)
       io.regWriteEnable := True
       io.aluCtrl := AluOp.ADD
@@ -85,6 +90,8 @@ class Decode extends Component {
       }
     }
     is(OpType.STORE) {
+      io.useRs1 := True
+      io.useRs2 := True
       io.imm := Rv32iExtractor.getImmS(io.inst)
       io.memWriteEnable := True
       io.aluCtrl := AluOp.ADD
@@ -96,6 +103,7 @@ class Decode extends Component {
       }
     }
     is(OpType.IMMOP) {
+      io.useRs1 := True
       io.imm := Rv32iExtractor.getImm12I(io.inst)
       io.regWriteEnable := True
       io.aluSrc := aluSrcImm
@@ -114,6 +122,8 @@ class Decode extends Component {
       }
     }
     is(OpType.REGOP) {
+      io.useRs1 := True
+      io.useRs2 := True
       io.regWriteEnable := True
       io.aluSrc := aluSrcReg
       switch(funct3) {
@@ -134,6 +144,8 @@ class Decode extends Component {
       }
     }
     is(OpType.BRANCH) {
+      io.useRs1 := True
+      io.useRs2 := True
       io.imm := Rv32iExtractor.getImmB(io.inst)
       io.branchCtrl := brNone
       switch(funct3) {
@@ -155,6 +167,7 @@ class Decode extends Component {
       io.aluSrc := aluSrcPc
     }
     is(OpType.JALR) {
+      io.useRs1 := True
       io.imm := Rv32iExtractor.getImm12I(io.inst)
       io.regWriteEnable := True
       io.jumpCtrl := jJalr

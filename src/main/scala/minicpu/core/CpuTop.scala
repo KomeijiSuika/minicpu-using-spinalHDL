@@ -54,8 +54,8 @@ class CpuTop(config: CpuConfig) extends Component {
   hazardUnit.io.idEx := idEx
   hazardUnit.io.exMem := exMem
   hazardUnit.io.memWb := memWb
-  hazardUnit.io.idReadAddr1 := decode.io.rs1
-  hazardUnit.io.idReadAddr2 := decode.io.rs2
+  hazardUnit.io.idReadAddr1 := Mux(decode.io.useRs1, decode.io.rs1, U(0, 5 bits))
+  hazardUnit.io.idReadAddr2 := Mux(decode.io.useRs2, decode.io.rs2, U(0, 5 bits))
 
   val loadStall = hazardUnit.io.stall
   val loadFlushE = hazardUnit.io.flush // 插入 bubble 到 EX（清空 ID/EX）

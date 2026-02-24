@@ -16,6 +16,7 @@ case class idExReg(config: CpuConfig) extends Bundle {
     val pc = UInt(config.xlen bits)
     val instr = UInt(config.xlen bits)
     val readAddr1, readAddr2, rd = UInt(5 bits)
+    val useRs1, useRs2 = Bool()
     val regData1, regData2 = UInt(config.xlen bits)
     val imm = UInt(32 bits)
     val regWriteEnable = Bool()
