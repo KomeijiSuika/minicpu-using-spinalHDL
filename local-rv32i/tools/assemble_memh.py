@@ -22,9 +22,17 @@ def main() -> int:
     args = parser.parse_args()
 
     workspace = Path(args.workspace).resolve()
-    assembler = workspace / "local-rv32i" / "assembler.py"
-    if not assembler.exists():
-        print(f"[assemble_memh] ERROR: assembler not found: {assembler}")
+    # Prefer local-rv32i/assembler.py if present; otherwise fall back to the
+    # reference repo copy at pipelined-rv32i/assembler.py.
+    assembler_candidates = [
+        workspace / "local-rv32i" / "assembler.py",
+        workspace / "pipelined-rv32i" / "assembler.py",
+    ]
+    assembler = next((p for p in assembler_candidates if p.exists()), None)
+    if assembler is None:
+        print("[assemble_memh] ERROR: assembler.py not found. Tried:")
+        for p in assembler_candidates:
+            print(f"  - {p}")
         return 1
 
     targets = []

@@ -1,5 +1,4 @@
 VexRiscv
-pipelined-rv32i/
 target/
 tmp/
 rtl/

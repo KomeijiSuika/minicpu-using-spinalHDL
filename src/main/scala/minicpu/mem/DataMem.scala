@@ -7,6 +7,17 @@ import minicpu.CpuConfig
 import minicpu.isa.Rv32iEncoding._
 
 class DataMem(config: CpuConfig) extends Component {
+  // -----------------------------------------------------------------------------
+  // Bank 设计说明（目的是与pipelined-rv32i项目中的 MMU 对齐，以便在之后验证自身的项目）
+  // 1) 本模块按地址高 4 位（addr[31:28]）区分 bank：
+  //    - 0x0: 指令区（INST）
+  //    - 0x1: 内存映射寄存器区（MMRS）
+  //    - 0x2: 显存区（VRAM）
+  //    - 0x3: 数据区（DATA）
+  // 2) DataMem 只负责 DATA bank（0x3），其它 bank 的访问在完整系统中应由对应模块处理。
+  // 3) 这样做的原因：避免不同地址空间发生“别名写入/读取”，
+  //    防止本应写到外设或指令区的访问误污染 dataMem。
+  // -----------------------------------------------------------------------------
   val io = new Bundle {
     // in
     val addr = in UInt(config.xlen bits)
@@ -26,18 +37,18 @@ class DataMem(config: CpuConfig) extends Component {
   val dataMem = Mem(UInt(config.xlen bits), 1024)
   dataMem.simPublic() // allow testbench to dump full memory contents
 
-  // Top-4-bit bank encoding, aligned with the reference MMU map:
-  // 0x0: instruction, 0x1: memory-mapped registers, 0x2: VRAM, 0x3: data RAM.
-  // This local DataMem only models the data RAM bank (0x3).
+  // 地址高 4 位 bank 编码（与参考 MMU 一致）：
+  // 0x0: 指令区，0x1: 内存映射寄存器，0x2: VRAM，0x3: 数据 RAM。
+  // 当前 DataMem 仅建模数据 RAM bank（0x3）。
   val mmuBankInst = U(0, 4 bits)
   val mmuBankMmrs = U(1, 4 bits)
   val mmuBankVram = U(2, 4 bits)
   val mmuBankData = U(3, 4 bits)
 
-  // Decode bank from address[31:28].
-  // Purpose: avoid aliasing writes/reads from other banks into dataMem.
-  // Example bug avoided: a store to low address (e.g. 0x00000078) should target
-  // instruction/peripheral space in full MMU, not corrupt data RAM shadow here.
+  // 由 address[31:28] 解析 bank。
+  // 目的：阻止其它 bank 的访问别名到 dataMem。
+  // 例如：写低地址（如 0x00000078）在完整 MMU 中应落到指令/外设空间，
+  // 不应误写到这里的 dataMem 影子区域。
   val addrBank = io.addr(31 downto 28)
   val isDataBank = addrBank === mmuBankData
 
@@ -57,8 +68,8 @@ class DataMem(config: CpuConfig) extends Component {
   io.dbgReadData := dataMem(dbgWordAddr)
 
   io.readData := 0
-  // Loads only return valid data when current address points to DATA bank.
-  // For non-data banks, return 0 to mimic "not handled by this slave" behavior.
+  // 仅当地址落在 DATA bank 时返回有效 load 结果；
+  // 非 DATA bank 返回 0，用于模拟“该从设备不处理此地址”。
   when(isDataBank) {
     switch(io.loadCtrl) {
       is(Funct3Load.LB)  { io.readData := lbVal }                 // LB
@@ -73,8 +84,8 @@ class DataMem(config: CpuConfig) extends Component {
   when(io.dbgWriteEnable) {
     dataMem(dbgWordAddr) := io.dbgWriteData
   } elsewhen(io.memWriteEnable && isDataBank) {
-    // Stores are gated by isDataBank for the same reason as loads:
-    // this module should not consume writes intended for MMR/VRAM/INST space.
+    // Store 同样受 isDataBank 门控：
+    // 本模块不应吞掉原本应写到 MMR/VRAM/INST 空间的请求。
     val byteMask = (U(0xFF, config.xlen bits) |<< shiftBits).resized
     val halfMask = (U(0xFFFF, config.xlen bits) |<< shiftBits).resized
     val byteData = (io.writeData(7 downto 0).resize(config.xlen) |<< shiftBits).resized

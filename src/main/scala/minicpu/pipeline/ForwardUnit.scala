@@ -14,16 +14,16 @@ class ForwardUnit(config: CpuConfig) extends Component {
   }
 
   io.forwardA := 0
-  when(io.exMem.regWriteEnable && (io.exMem.rd =/= 0) && (io.exMem.rd === io.idEx.readAddr1)) {
+  when(io.idEx.useRs1 && io.exMem.regWriteEnable && (io.exMem.rd =/= 0) && (io.exMem.rd === io.idEx.readAddr1)) {
     io.forwardA := 1 // EX/MEM 前递
-  } elsewhen (io.memWb.regWriteEnable && (io.memWb.rd =/= 0) && (io.memWb.rd === io.idEx.readAddr1)) {
+  } elsewhen (io.idEx.useRs1 && io.memWb.regWriteEnable && (io.memWb.rd =/= 0) && (io.memWb.rd === io.idEx.readAddr1)) {
     io.forwardA := 2 // MEM/WB 前递
   }
 
   io.forwardB := 0
-  when(io.exMem.regWriteEnable && (io.exMem.rd =/= 0) && (io.exMem.rd === io.idEx.readAddr2)) {
+  when(io.idEx.useRs2 && io.exMem.regWriteEnable && (io.exMem.rd =/= 0) && (io.exMem.rd === io.idEx.readAddr2)) {
     io.forwardB := 1 // EX/MEM 前递
-  } elsewhen (io.memWb.regWriteEnable && (io.memWb.rd =/= 0) && (io.memWb.rd === io.idEx.readAddr2)) {
+  } elsewhen (io.idEx.useRs2 && io.memWb.regWriteEnable && (io.memWb.rd =/= 0) && (io.memWb.rd === io.idEx.readAddr2)) {
     io.forwardB := 2 // MEM/WB 前递
   }
 }

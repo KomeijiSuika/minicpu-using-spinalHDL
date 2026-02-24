@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-# Heavily based on this [reference card](http://csci206sp2020.courses.bucknell.edu/files/2020/01/riscv-card.pdf)
-# and the official [spec](https://github.com/riscv/riscv-isa-manual/releases/download/Ratified-IMAFDQC/riscv-spec-20191213.pdf)
-
+# NOTE:
+# This file exists to make local-rv32i/tools/assemble_memh.py self-contained.
+# It is the same assembler implementation as pipelined-rv32i/assembler.py.
 
 import argparse
 import os
@@ -10,7 +10,12 @@ import os.path as path
 import re
 import sys
 
-import rv32i
+# Prefer local-rv32i/rv32i.py; fall back to pipelined-rv32i/rv32i.py if needed.
+try:
+    import rv32i  # type: ignore
+except Exception:
+    sys.path.insert(0, str(path.join(path.dirname(__file__), "..", "pipelined-rv32i")))
+    import rv32i  # type: ignore
 
 
 class AssemblyProgram:
@@ -59,8 +64,7 @@ class AssemblyProgram:
             parsed["instruction"] = "xori"
             parsed["args"].append("-1")
         if parsed["instruction"] == "li":
-
-            raise NotImplemented("li is not supported")
+            raise NotImplementedError("li is not supported")
         if parsed["instruction"] == "bgt":
             parsed["instruction"] = "blt"
             parsed["args"] = [
@@ -88,13 +92,13 @@ class AssemblyProgram:
         for line in self.parsed_lines:
             try:
                 bits = rv32i.line_to_bits(line, labels=self.labels, address=address)
-            except rv32i.LineException as e:
+            except rv32i.LineException as e:  # type: ignore
                 print(f"Error on line {line['line_number']} ({line['instruction']})")
                 print(f"  {e}")
                 print(f"  original line: {line['original']}")
                 return -1
             except Exception as e:
-                print(f"Unhandled error, possible bug in assembler!!!")
+                print("Unhandled error, possible bug in assembler!!!")
                 print(f"Error on line {line['line_number']} ({line['instruction']})")
                 print(f"  {e}")
                 print(f"  original line: {line['original']}")

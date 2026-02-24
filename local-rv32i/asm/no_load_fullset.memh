@@ -1,0 +1,47 @@
+123450b7 // PC=0x0 line=13: lui   x1, 0x12345
+00000117 // PC=0x4 line=14: auipc x2, 0
+01100193 // PC=0x8 line=17: addi  x3,  x0, 17
+ff700213 // PC=0xc line=18: addi  x4,  x0, -9
+00319293 // PC=0x10 line=19: slli  x5,  x3, 3
+0022d313 // PC=0x14 line=20: srli  x6,  x5, 2
+40125393 // PC=0x18 line=21: srai  x7,  x4, 1
+1552c413 // PC=0x1c line=22: xori  x8,  x5, 0x155
+02246493 // PC=0x20 line=23: ori   x9,  x8, 0x22
+1ff4f513 // PC=0x24 line=24: andi  x10, x9, 0x1ff
+fff22593 // PC=0x28 line=25: slti  x11, x4, -1
+02023613 // PC=0x2c line=26: sltiu x12, x4, 32
+005186b3 // PC=0x30 line=29: add   x13, x3, x5
+40668733 // PC=0x34 line=30: sub   x14, x13, x6
+00b197b3 // PC=0x38 line=31: sll   x15, x3, x11
+00322833 // PC=0x3c line=32: slt   x16, x4, x3
+003238b3 // PC=0x40 line=33: sltu  x17, x4, x3
+00e6c933 // PC=0x44 line=34: xor   x18, x13, x14
+00b959b3 // PC=0x48 line=35: srl   x19, x18, x11
+40b25a33 // PC=0x4c line=36: sra   x20, x4, x11
+0149eab3 // PC=0x50 line=37: or    x21, x19, x20
+012afb33 // PC=0x54 line=38: and   x22, x21, x18
+00d02023 // PC=0x58 line=41: sw    x13, 0(x0)
+00e01223 // PC=0x5c line=42: sh    x14, 4(x0)
+00f00423 // PC=0x60 line=43: sb    x15, 8(x0)
+00100b93 // PC=0x64 line=46: addi  x23, x0, 1
+00200c13 // PC=0x68 line=47: addi  x24, x0, 2
+017b8463 // PC=0x6c line=49: beq   x23, x23, BEQ_OK
+001f8f93 // PC=0x70 line=50: addi x31, x31, 1
+018b9463 // PC=0x74 line=53: bne   x23, x24, BNE_OK
+001f8f93 // PC=0x78 line=54: addi x31, x31, 1
+018bc463 // PC=0x7c line=57: blt   x23, x24, BLT_OK
+001f8f93 // PC=0x80 line=58: addi x31, x31, 1
+017c5463 // PC=0x84 line=61: bge   x24, x23, BGE_OK
+001f8f93 // PC=0x88 line=62: addi x31, x31, 1
+018be463 // PC=0x8c line=65: bltu  x23, x24, BLTU_OK
+001f8f93 // PC=0x90 line=66: addi x31, x31, 1
+017c7463 // PC=0x94 line=69: bgeu  x24, x23, BGEU_OK
+001f8f93 // PC=0x98 line=70: addi x31, x31, 1
+00c000ef // PC=0x9c line=74: jal   x1, FUNC
+001f8f93 // PC=0xa0 line=75: addi  x31, x31, 1
+00000063 // PC=0xa4 line=78: beq   x0, x0, DONE
+00500c93 // PC=0xa8 line=81: addi x25, x0, 5
+00600d13 // PC=0xac line=82: addi x26, x0, 6
+01ac8db3 // PC=0xb0 line=83: add  x27, x25, x26
+01b02623 // PC=0xb4 line=84: sw   x27, 12(x0)
+00008067 // PC=0xb8 line=85: jalr x0, x1, 0

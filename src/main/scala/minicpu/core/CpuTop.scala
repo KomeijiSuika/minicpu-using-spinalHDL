@@ -143,6 +143,8 @@ class CpuTop(config: CpuConfig) extends Component {
     idEx.instr := ifId.instr
     idEx.readAddr1 := decode.io.rs1
     idEx.readAddr2 := decode.io.rs2
+    idEx.useRs1 := decode.io.useRs1
+    idEx.useRs2 := decode.io.useRs2
     idEx.rd := decode.io.rd
     idEx.regData1 := idRs1Data
     idEx.regData2 := idRs2Data
