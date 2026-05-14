@@ -4,3 +4,5 @@ tmp/
 rtl/
 sim_out/
 simWorkspace/
+.pipeline
+.metals
