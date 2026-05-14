@@ -1,8 +1,26 @@
+# External imported repo / generated checkout
 VexRiscv
+
+# SBT / Scala build outputs
 target/
+project/target/
+
+# Bloop / Metals IDE cache files
+.bloop/
+project/.bloop/
+.metals/
+project/metals.sbt
+project/project/
+
+# Temporary simulation / generated RTL artifacts
 tmp/
 rtl/
 sim_out/
 simWorkspace/
-.pipeline
-.metals
+
+# Python cache files from helper scripts
+**/__pycache__/
+*.pyc
+
+# Keep Hypo-Workflow files tracked, but ignore transient plan-state cache
+.plan-state/
