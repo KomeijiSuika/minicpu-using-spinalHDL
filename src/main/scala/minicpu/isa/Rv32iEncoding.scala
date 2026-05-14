@@ -60,6 +60,18 @@ object Funct7Type {
   // funct7 for R-type instructions (bits 31:25)
   def DEFAULT = U(0x00, 7 bits)  // ADD, SLL, SRL, AND, OR, XOR, SLT, SLTU
   def ALT     = U(0x20, 7 bits)  // SUB, SRA (0x20 = 7'b0100000)
+  def MDU     = U(0x01, 7 bits)  // RV32M multiply/divide/remainder
+}
+
+object Funct3Mdu {
+  def MUL    = U(0, 3 bits)
+  def MULH   = U(1, 3 bits)
+  def MULHSU = U(2, 3 bits)
+  def MULHU  = U(3, 3 bits)
+  def DIV    = U(4, 3 bits)
+  def DIVU   = U(5, 3 bits)
+  def REM    = U(6, 3 bits)
+  def REMU   = U(7, 3 bits)
 }
 
 object ImmType {
@@ -182,6 +194,7 @@ object Rv32iEncoding {
   val Funct3IType: minicpu.isa.Funct3IType.type = minicpu.isa.Funct3IType
   val Funct3Branch: minicpu.isa.Funct3Branch.type = minicpu.isa.Funct3Branch
   val Funct7Type: minicpu.isa.Funct7Type.type = minicpu.isa.Funct7Type
+  val Funct3Mdu: minicpu.isa.Funct3Mdu.type = minicpu.isa.Funct3Mdu
   val ImmType: minicpu.isa.ImmType.type = minicpu.isa.ImmType
   val Rv32iExtractor: minicpu.isa.Rv32iExtractor.type = minicpu.isa.Rv32iExtractor
 }

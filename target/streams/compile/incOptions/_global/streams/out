@@ -1,2 +1,2 @@
-[0m[[0m[0mdebug[0m] [0m[0mCreated transactional ClassFileManager with tempDir = /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/target/scala-2.12/classes.bak[0m
-[0m[[0m[0mdebug[0m] [0m[0mRemoving the temporary directory used for backing up class files: /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/target/scala-2.12/classes.bak[0m
+[debug] Created transactional ClassFileManager with tempDir = /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/target/scala-2.12/classes.bak
+[debug] Removing the temporary directory used for backing up class files: /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/target/scala-2.12/classes.bak

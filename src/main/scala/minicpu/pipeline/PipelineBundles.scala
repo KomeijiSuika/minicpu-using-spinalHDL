@@ -4,6 +4,7 @@ import spinal.core._
 import spinal.lib._
 import minicpu.CpuConfig
 import minicpu.components.AluOp
+import minicpu.mdu.MduOp
 
 // TODO: IF/ID, ID/EX, EX/MEM, MEM/WB 流水线寄存器 Bundles
 
@@ -32,6 +33,7 @@ case class idExReg(config: CpuConfig) extends Bundle {
     val jumpCtrl = UInt(2 bits)  
     // Utype control 信号
     val utypeCtrl = UInt(2 bits)
+    val mduOp = MduOp()
 }
 
 case class exMemReg(config: CpuConfig) extends Bundle {

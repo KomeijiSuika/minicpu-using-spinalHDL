@@ -4,6 +4,7 @@ import spinal.core._
 import spinal.lib._
 import Rv32iEncoding._
 import minicpu.components.AluOp
+import minicpu.mdu.MduOp
 
 class Decode extends Component {
   val io = new Bundle {
@@ -28,6 +29,8 @@ class Decode extends Component {
     val jumpCtrl = out UInt(2 bits)  
     // Utype control 信号
     val utypeCtrl = out UInt(2 bits) // 00: none, 01: LUI, 10: AUIPC
+    // multi-cycle multiply / divide
+    val mduOp = out(MduOp())
   }
   
   // 默认值，避免 latch
@@ -45,6 +48,7 @@ class Decode extends Component {
   io.branchCtrl := 0
   io.jumpCtrl := 0
   io.utypeCtrl := 0
+  io.mduOp := MduOp.none
   io.regWriteEnable := False
   io.memWriteEnable := False
   io.loadCtrl := 3
@@ -126,21 +130,34 @@ class Decode extends Component {
       io.useRs2 := True
       io.regWriteEnable := True
       io.aluSrc := aluSrcReg
-      switch(funct3) {
-        is(Funct3IType.ADD_SUB) {
-          when(funct7 === Funct7Type.ALT) { io.aluCtrl := AluOp.SUB }
-            .otherwise { io.aluCtrl := AluOp.ADD }
+      when(funct7 === Funct7Type.MDU) {
+        switch(funct3) {
+          is(Funct3Mdu.MUL)    { io.mduOp := MduOp.mul }
+          is(Funct3Mdu.MULH)   { io.mduOp := MduOp.mulh }
+          is(Funct3Mdu.MULHSU) { io.mduOp := MduOp.mulhsu }
+          is(Funct3Mdu.MULHU)  { io.mduOp := MduOp.mulhu }
+          is(Funct3Mdu.DIV)    { io.mduOp := MduOp.div }
+          is(Funct3Mdu.DIVU)   { io.mduOp := MduOp.divu }
+          is(Funct3Mdu.REM)    { io.mduOp := MduOp.rem }
+          is(Funct3Mdu.REMU)   { io.mduOp := MduOp.remu }
         }
-        is(Funct3IType.SLL)     { io.aluCtrl := AluOp.SLL }
-        is(Funct3IType.SLT)     { io.aluCtrl := AluOp.SLT }
-        is(Funct3IType.SLTU)    { io.aluCtrl := AluOp.SLTU }
-        is(Funct3IType.XOR)     { io.aluCtrl := AluOp.XOR }
-        is(Funct3IType.SRL_SRA) {
-          when(funct7 === Funct7Type.ALT) { io.aluCtrl := AluOp.SRA }
-            .otherwise { io.aluCtrl := AluOp.SRL }
+      } otherwise {
+        switch(funct3) {
+          is(Funct3IType.ADD_SUB) {
+            when(funct7 === Funct7Type.ALT) { io.aluCtrl := AluOp.SUB }
+              .otherwise { io.aluCtrl := AluOp.ADD }
+          }
+          is(Funct3IType.SLL)     { io.aluCtrl := AluOp.SLL }
+          is(Funct3IType.SLT)     { io.aluCtrl := AluOp.SLT }
+          is(Funct3IType.SLTU)    { io.aluCtrl := AluOp.SLTU }
+          is(Funct3IType.XOR)     { io.aluCtrl := AluOp.XOR }
+          is(Funct3IType.SRL_SRA) {
+            when(funct7 === Funct7Type.ALT) { io.aluCtrl := AluOp.SRA }
+              .otherwise { io.aluCtrl := AluOp.SRL }
+          }
+          is(Funct3IType.OR)      { io.aluCtrl := AluOp.OR }
+          is(Funct3IType.AND)     { io.aluCtrl := AluOp.AND }
         }
-        is(Funct3IType.OR)      { io.aluCtrl := AluOp.OR }
-        is(Funct3IType.AND)     { io.aluCtrl := AluOp.AND }
       }
     }
     is(OpType.BRANCH) {

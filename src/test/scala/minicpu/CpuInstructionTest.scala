@@ -6,6 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.core._
 import spinal.core.sim._
 import scala.collection.mutable
+import java.nio.file.{Files, Paths}
 
 /**
  * 综合 CPU 指令测试框架
@@ -18,8 +19,15 @@ import scala.collection.mutable
  */
 class CpuInstructionTest extends AnyFunSuite {
 
+  private def freshWorkspace(prefix: String): String = {
+    val root = Paths.get("simWorkspace")
+    Files.createDirectories(root)
+    Files.createTempDirectory(root, prefix + "_").toAbsolutePath.toString
+  }
+
   private def simConfig: SpinalSimConfig = {
     SimConfig
+      .workspacePath(freshWorkspace("cpu_instruction"))
       .withVerilator
       .addSimulatorFlag("-CFLAGS")
       .addSimulatorFlag("-std=c++17")
@@ -356,6 +364,48 @@ class CpuInstructionTest extends AnyFunSuite {
       assert(sim.readRegister(9) == expX9, "add x9 = x7 + x8 的结果不正确")
     }
   }
+
+  test("Test RV32M MUL DIV REM") {
+    createTestSim { sim =>
+      val instructions = Seq(
+        0x00d00093L,  // addi x1, x0, 13
+        0x00500113L,  // addi x2, x0, 5
+        0x022081b3L,  // mul x3, x1, x2   => 65
+        0x0220c233L,  // div x4, x1, x2   => 2
+        0x0220e2b3L   // rem x5, x1, x2   => 3
+      )
+
+      sim.loadInstructions(instructions)
+      sim.resetCpu()
+      sim.runCycles(120)
+
+      assert(sim.readRegister(3) == 65L, "MUL 结果错误")
+      assert(sim.readRegister(4) == 2L, "DIV 结果错误")
+      assert(sim.readRegister(5) == 3L, "REM 结果错误")
+    }
+  }
+
+  test("Test RV32M signed and divide-by-zero corner cases") {
+    createTestSim { sim =>
+      val instructions = Seq(
+        0xff300093L,  // addi x1, x0, -13
+        0x00500113L,  // addi x2, x0, 5
+        0x0220c333L,  // div x6, x1, x2   => -2
+        0x0220e3b3L,  // rem x7, x1, x2   => -3
+        0x0200c4b3L,  // div x9, x1, x0   => -1
+        0x0200e533L   // rem x10, x1, x0  => -13
+      )
+
+      sim.loadInstructions(instructions)
+      sim.resetCpu()
+      sim.runCycles(160)
+
+      assert(sim.readRegister(6) == 0xFFFFFFFEL, "有符号 DIV 结果错误")
+      assert(sim.readRegister(7) == 0xFFFFFFFDL, "有符号 REM 结果错误")
+      assert(sim.readRegister(9) == 0xFFFFFFFFL, "除零 DIV 结果错误")
+      assert(sim.readRegister(10) == 0xFFFFFFF3L, "除零 REM 结果错误")
+    }
+  }
   /**
    * 自定义测试：用户可在此添加自己的机器码
    */
@@ -474,7 +524,7 @@ class SimData(dut: CpuTop) {
    * @return 内存值
    */
   def readDataMemory(wordAddr: Int): Long = {
-    dut.io.dbg_memAddr #= wordAddr
+    dut.io.dbg_memAddr #= (wordAddr * 4)
     dut.clockDomain.waitSampling()
     dut.io.dbg_memData.toLong
   }
@@ -484,7 +534,7 @@ class SimData(dut: CpuTop) {
    */
   def writeDataMemory(wordAddr: Int, value: Long): Unit = {
     // 使用 #= 给多个硬件信号赋值，模拟内存写操作
-    dut.io.dbg_memAddr #= wordAddr           // 设置要写入的内存地址
+    dut.io.dbg_memAddr #= (wordAddr * 4)     // 设置要写入的字节地址
     dut.io.dbg_memWriteEnable #= true        // 使能写操作（true 在硬件中会转为 1）
     dut.io.dbg_memWriteData #= value         // 设置要写入的数据
     
