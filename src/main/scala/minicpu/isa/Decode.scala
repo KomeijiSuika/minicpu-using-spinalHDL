@@ -4,7 +4,8 @@ import spinal.core._
 import spinal.lib._
 import Rv32iEncoding._
 import minicpu.components.AluOp
-import minicpu.mdu.MduOp
+import minicpu.mdu.{DivOp, MduOp, MulOp}
+import minicpu.pipeline.ResultSrc
 
 class Decode extends Component {
   val io = new Bundle {
@@ -31,6 +32,9 @@ class Decode extends Component {
     val utypeCtrl = out UInt(2 bits) // 00: none, 01: LUI, 10: AUIPC
     // multi-cycle multiply / divide
     val mduOp = out(MduOp())
+    val mulOp = out(MulOp())
+    val divOp = out(DivOp())
+    val resultSrc = out(ResultSrc())
   }
   
   // 默认值，避免 latch
@@ -49,6 +53,9 @@ class Decode extends Component {
   io.jumpCtrl := 0
   io.utypeCtrl := 0
   io.mduOp := MduOp.none
+  io.mulOp := MulOp.mul
+  io.divOp := DivOp.div
+  io.resultSrc := ResultSrc.alu
   io.regWriteEnable := False
   io.memWriteEnable := False
   io.loadCtrl := 3
@@ -85,6 +92,7 @@ class Decode extends Component {
       io.regWriteEnable := True
       io.aluCtrl := AluOp.ADD
       io.aluSrc := aluSrcImm
+      io.resultSrc := ResultSrc.mem
       switch(funct3) {
         is(Funct3Load.LB)  { io.loadCtrl := 0 }
         is(Funct3Load.LH)  { io.loadCtrl := 1 }
@@ -132,14 +140,14 @@ class Decode extends Component {
       io.aluSrc := aluSrcReg
       when(funct7 === Funct7Type.MDU) {
         switch(funct3) {
-          is(Funct3Mdu.MUL)    { io.mduOp := MduOp.mul }
-          is(Funct3Mdu.MULH)   { io.mduOp := MduOp.mulh }
-          is(Funct3Mdu.MULHSU) { io.mduOp := MduOp.mulhsu }
-          is(Funct3Mdu.MULHU)  { io.mduOp := MduOp.mulhu }
-          is(Funct3Mdu.DIV)    { io.mduOp := MduOp.div }
-          is(Funct3Mdu.DIVU)   { io.mduOp := MduOp.divu }
-          is(Funct3Mdu.REM)    { io.mduOp := MduOp.rem }
-          is(Funct3Mdu.REMU)   { io.mduOp := MduOp.remu }
+          is(Funct3Mdu.MUL)    { io.mduOp := MduOp.mul; io.mulOp := MulOp.mul; io.resultSrc := ResultSrc.mul }
+          is(Funct3Mdu.MULH)   { io.mduOp := MduOp.mulh; io.mulOp := MulOp.mulh; io.resultSrc := ResultSrc.mul }
+          is(Funct3Mdu.MULHSU) { io.mduOp := MduOp.mulhsu; io.mulOp := MulOp.mulhsu; io.resultSrc := ResultSrc.mul }
+          is(Funct3Mdu.MULHU)  { io.mduOp := MduOp.mulhu; io.mulOp := MulOp.mulhu; io.resultSrc := ResultSrc.mul }
+          is(Funct3Mdu.DIV)    { io.mduOp := MduOp.div; io.divOp := DivOp.div; io.resultSrc := ResultSrc.div }
+          is(Funct3Mdu.DIVU)   { io.mduOp := MduOp.divu; io.divOp := DivOp.divu; io.resultSrc := ResultSrc.div }
+          is(Funct3Mdu.REM)    { io.mduOp := MduOp.rem; io.divOp := DivOp.rem; io.resultSrc := ResultSrc.div }
+          is(Funct3Mdu.REMU)   { io.mduOp := MduOp.remu; io.divOp := DivOp.remu; io.resultSrc := ResultSrc.div }
         }
       } otherwise {
         switch(funct3) {
@@ -182,6 +190,7 @@ class Decode extends Component {
       io.jumpCtrl := jJal
       io.aluCtrl := AluOp.ADD
       io.aluSrc := aluSrcPc
+      io.resultSrc := ResultSrc.pc4
     }
     is(OpType.JALR) {
       io.useRs1 := True
@@ -190,6 +199,7 @@ class Decode extends Component {
       io.jumpCtrl := jJalr
       io.aluCtrl := AluOp.ADD
       io.aluSrc := aluSrcImm
+      io.resultSrc := ResultSrc.pc4
     }
     is(OpType.LUI) {
       io.rs1 := 0

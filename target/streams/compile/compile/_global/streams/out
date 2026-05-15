@@ -1,10 +1,4 @@
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mdu/Mdu.scala:310:9: not found: value CountLeadingZeroes
-[error]         CountLeadingZeroes(divisorMag.asBits).resize(countWidth) -
-[error]         ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mdu/Mdu.scala:311:11: not found: value CountLeadingZeroes
-[error]           CountLeadingZeroes(dividendMag.asBits).resize(countWidth) +
-[error]           ^
-[error] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/mdu/Mdu.scala:350:25: not found: value CountLeadingZeroes
-[error]     val qdsShiftToTop = CountLeadingZeroes(scaledDivisorWide.asBits).resize(qdsShiftWidth)
-[error]                         ^
-[error] three errors found
+[warn] /home/shenby/workplace/learning_SpinalHDL/SpinalHDL_minicpu/src/main/scala/minicpu/pipeline/HazardUnit.scala:6:25: imported `ResultSrc` is permanently hidden by definition of object ResultSrc in package pipeline
+[warn] import minicpu.pipeline.ResultSrc
+[warn]                         ^
+[warn] one warning found

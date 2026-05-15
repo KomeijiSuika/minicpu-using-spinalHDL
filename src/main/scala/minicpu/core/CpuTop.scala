@@ -33,8 +33,8 @@ class CpuTop(config: CpuConfig) extends Component {
   val dataMem = new DataMem(config)
   val forwardUnit = new ForwardUnit(config)
   val hazardUnit = new HazardUnit(config)
-  val multiplier = Multiplier(config).setName("multiplier_u")
-  val divider = Divider(config).setName("divider_u")
+  val mulUnit = MulUnit(config).setName("mul_u")
+  val divUnit = DivUnit(config).setName("div_u")
   val ifId = Reg(ifIdReg(config)) init(ifIdReg(config).getZero) // IF/ID 流水线寄存器
   val idEx = Reg(idExReg(config)) init(idExReg(config).getZero) // ID/EX 流水线寄存器
   val exMem = Reg(exMemReg(config)) init(exMemReg(config).getZero) // EX/MEM 流水线寄存器
@@ -43,11 +43,6 @@ class CpuTop(config: CpuConfig) extends Component {
   val PC = RegInit(U(config.resetVector, config.xlen bits))
   val noLoadCtrl = U(3, 3 bits)
   val noStoreCtrl = U(3, 3 bits)
-
-  // 先声明 WB 写回值（用于写寄存器/前递）
-  // Decode 约定：loadCtrl == 3 表示非 load，其它值表示某种 load
-  val wbValue = UInt(config.xlen bits)
-  wbValue := Mux(memWb.loadCtrl =/= noLoadCtrl, memWb.memReadData, memWb.aluResult)
 
   //连线
 
@@ -61,49 +56,64 @@ class CpuTop(config: CpuConfig) extends Component {
   hazardUnit.io.memWb := memWb
   hazardUnit.io.idReadAddr1 := Mux(decode.io.useRs1, decode.io.rs1, U(0, 5 bits))
   hazardUnit.io.idReadAddr2 := Mux(decode.io.useRs2, decode.io.rs2, U(0, 5 bits))
-
-  val loadStall = hazardUnit.io.stall
-  val loadFlushE = hazardUnit.io.flush // 插入 bubble 到 EX（清空 ID/EX）
+  hazardUnit.io.idWriteAddr := decode.io.rd
+  hazardUnit.io.idResultSrc := decode.io.resultSrc
 
   // EX 阶段源操作数（含前递）
   val exRs1 = UInt(config.xlen bits)
   switch(forwardUnit.io.forwardA) {
     is(1) { exRs1 := exMem.aluResult } // EX/MEM
-    is(2) { exRs1 := wbValue }         // MEM/WB
+    is(2) { exRs1 := Mux(memWb.loadCtrl =/= noLoadCtrl, memWb.memReadData, memWb.aluResult) }
     default { exRs1 := idEx.regData1 }
   }
 
   val exRs2 = UInt(config.xlen bits)
   switch(forwardUnit.io.forwardB) {
     is(1) { exRs2 := exMem.aluResult } // EX/MEM
-    is(2) { exRs2 := wbValue }         // MEM/WB
+    is(2) { exRs2 := Mux(memWb.loadCtrl =/= noLoadCtrl, memWb.memReadData, memWb.aluResult) }
     default { exRs2 := idEx.regData2 }
   }
 
-  val idExIsMdu = idEx.mduOp =/= MduOp.none
-  val exMemBusy = exMem.regWriteEnable || exMem.memWriteEnable
-  val mduResultReady = multiplier.io.done || divider.io.done
-  val mduExecBusy = multiplier.io.busy || divider.io.busy
-  val mduNeedDrain = idExIsMdu && exMemBusy
-  val mduLaunch = idExIsMdu && !mduNeedDrain && !mduExecBusy && !mduResultReady
-  val mduStall = idExIsMdu && !mduResultReady
-  val frontStall = loadStall || mduStall
+  mulUnit.io.regDE := idEx
+  mulUnit.io.rs1DataE := exRs1.asBits
+  mulUnit.io.rs2DataE := exRs2.asBits
+  mulUnit.io.stallMulW := hazardUnit.io.stallMulW
+  divUnit.io.regDE := idEx
+  divUnit.io.rs1DataE := exRs1.asBits
+  divUnit.io.rs2DataE := exRs2.asBits
+  divUnit.io.stallDivW := hazardUnit.io.stallDivW
 
-  multiplier.io.start := mduLaunch && MduOp.isMul(idEx.mduOp)
-  multiplier.io.srca := exRs1.asBits
-  multiplier.io.srcb := exRs2.asBits
-  multiplier.io.mulOp := MduOp.toMulOp(idEx.mduOp)
+  val mulWb = mulUnit.io.wb
+  val divWb = divUnit.io.wb
+  hazardUnit.io.rdMul := mulUnit.io.rdMul
+  hazardUnit.io.rdDiv := divUnit.io.rdDiv
+  val mulBusy = (mulUnit.io.resultSrcMul === ResultSrc.mul) && !(mulWb.regWrite && !hazardUnit.io.stallMulW)
+  val divBusy = (divUnit.io.resultSrcDiv === ResultSrc.div) && !(divWb.regWrite && !hazardUnit.io.stallDivW)
+  hazardUnit.io.mulBusy := mulBusy
+  hazardUnit.io.divBusy := divBusy
+  hazardUnit.io.regWriteMul := mulWb.regWrite
+  hazardUnit.io.regWriteDiv := divWb.regWrite
 
-  divider.io.start := mduLaunch && MduOp.isDiv(idEx.mduOp)
-  divider.io.srca := exRs1.asBits
-  divider.io.srcb := exRs2.asBits
-  divider.io.divOp := MduOp.toDivOp(idEx.mduOp)
-
-  val mduResult = UInt(config.xlen bits)
-  mduResult := multiplier.io.result.asUInt
-  when(divider.io.done) {
-    mduResult := divider.io.result.asUInt
+  val coreWbValue = UInt(config.xlen bits)
+  coreWbValue := Mux(memWb.loadCtrl =/= noLoadCtrl, memWb.memReadData, memWb.aluResult)
+  val wbWriteEnable = Bool()
+  val wbWriteAddr = UInt(5 bits)
+  val wbWriteData = UInt(config.xlen bits)
+  wbWriteEnable := memWb.regWriteEnable
+  wbWriteAddr := memWb.rd
+  wbWriteData := coreWbValue
+  when(divWb.regWrite) {
+    wbWriteEnable := True
+    wbWriteAddr := divWb.rd
+    wbWriteData := divWb.result
+  } elsewhen (mulWb.regWrite) {
+    wbWriteEnable := True
+    wbWriteAddr := mulWb.rd
+    wbWriteData := mulWb.result
   }
+
+  val frontStall = hazardUnit.io.stall
+  val loadFlushE = hazardUnit.io.flush
 
   // 分支/跳转在 EX 决策（最小实现：branchCtrl/jumpCtrl 来自 idEx）
   val exBranchTaken = Bool()
@@ -148,21 +158,21 @@ class CpuTop(config: CpuConfig) extends Component {
   decode.io.inst := ifId.instr
   regFile.io.readAddr1 := decode.io.rs1
   regFile.io.readAddr2 := decode.io.rs2
-  regFile.io.writeAddr := memWb.rd
-  regFile.io.writeData := wbValue
-  regFile.io.writeEnable := memWb.regWriteEnable
+  regFile.io.writeAddr := wbWriteAddr
+  regFile.io.writeData := wbWriteData
+  regFile.io.writeEnable := wbWriteEnable
 
   // ID 阶段读数 + WB 同拍旁路（修正 regfile 同拍写回可见性）
   val idRs1Data = UInt(config.xlen bits)
   idRs1Data := regFile.io.readData1
-  when(memWb.regWriteEnable && (memWb.rd =/= 0) && (memWb.rd === decode.io.rs1)) {
-    idRs1Data := wbValue
+  when(wbWriteEnable && (wbWriteAddr =/= 0) && (wbWriteAddr === decode.io.rs1)) {
+    idRs1Data := wbWriteData
   }
 
   val idRs2Data = UInt(config.xlen bits)
   idRs2Data := regFile.io.readData2
-  when(memWb.regWriteEnable && (memWb.rd =/= 0) && (memWb.rd === decode.io.rs2)) {
-    idRs2Data := wbValue
+  when(wbWriteEnable && (wbWriteAddr =/= 0) && (wbWriteAddr === decode.io.rs2)) {
+    idRs2Data := wbWriteData
   }
 
   //ID/EX 流水线寄存器
@@ -180,6 +190,7 @@ class CpuTop(config: CpuConfig) extends Component {
     idEx.regData2 := idRs2Data
     idEx.imm := decode.io.imm
     idEx.regWriteEnable := decode.io.regWriteEnable
+    idEx.resultSrc := decode.io.resultSrc
     idEx.memWriteEnable := decode.io.memWriteEnable
     idEx.loadCtrl := decode.io.loadCtrl
     idEx.storeCtrl := decode.io.storeCtrl
@@ -189,6 +200,8 @@ class CpuTop(config: CpuConfig) extends Component {
     idEx.jumpCtrl := decode.io.jumpCtrl
     idEx.utypeCtrl := decode.io.utypeCtrl
     idEx.mduOp := decode.io.mduOp
+    idEx.mulOp := decode.io.mulOp
+    idEx.divOp := decode.io.divOp
   } // loadStall 时：保持 idEx 不变；但 loadFlushE 会把它清成 bubble
 
   // forward unit
@@ -221,16 +234,7 @@ class CpuTop(config: CpuConfig) extends Component {
 
 
   // EX/MEM 流水线寄存器
-  when(mduResultReady) {
-    exMem.pc := idEx.pc
-    exMem.rd := idEx.rd
-    exMem.aluResult := mduResult
-    exMem.storeData := 0
-    exMem.regWriteEnable := idEx.regWriteEnable
-    exMem.memWriteEnable := False
-    exMem.loadCtrl := noLoadCtrl
-    exMem.storeCtrl := noStoreCtrl
-  } elsewhen (mduStall) {
+  when(idEx.resultSrc === ResultSrc.mul || idEx.resultSrc === ResultSrc.div) {
     exMem := exMemReg(config).getZero
   } otherwise {
     exMem.pc := idEx.pc

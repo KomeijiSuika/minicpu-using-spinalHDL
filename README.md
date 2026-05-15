@@ -1,15 +1,16 @@
-# SpinalHDL 五级流水 RV32I MiniCPU
+# SpinalHDL 五级流水 RV32IM MiniCPU
 
-本仓库使用 SpinalHDL 实现了一个 **RV32I 五级流水线（IF/ID/EX/MEM/WB）CPU**，用于学习与验证。
+本仓库使用 SpinalHDL 实现了一个 **RV32IM 五级流水线（IF/ID/EX/MEM/WB）CPU**，用于学习与验证。
 
 ## 1) CPU 特性
 
-- 五级流水线 RV32I
+- 五级流水线 RV32IM
 - **无分支预测**（分支/跳转在 EX 阶段决策并重定向 PC）
 - 有冒险（hazard）和前递（forward）模块
 - 支持 RV32I 基础指令集中的常用指令
+- 支持 RV32M：`mul/mulh/mulhsu/mulhu/div/divu/rem/remu`
     - **不支持**：`ecall`、`ebreak`
-    - **不支持任何扩展指令**（如 M/A/C 等）
+    - **不支持**：A/C 等其余扩展
 
 ## 2) DataMemory 的 4 个 bank（对齐参考模型用）
 
@@ -25,7 +26,23 @@ pipelined-rv32i为支持lui和auipc指令，我手动添加支持
 
 注意：**即便做了对齐，目前仍存在少量 load 指令在两个项目之间的行为不一致**（需要继续定位对齐点/边界条件）。
 
-## 3) 验证方式（汇编驱动 + 参考 expected）
+## 3) 当前主验证方式
+
+当前推荐的主验证入口是规范套件：
+
+```bash
+sbt "runMain minicpu.validation.ValidationMain TestRV32I"
+sbt "runMain minicpu.validation.ValidationMain TestRV32M"
+```
+
+固定产物：
+
+- `build/TestRV32I.txt`
+- `build/TestRV32M.txt`
+
+这套入口借鉴了 Duna3003 的验证组织方式：固定 suite 名称、固定日志产物、固定 PASS/FAIL 判据。
+
+## 4) Legacy 验证方式（汇编驱动 + 参考 expected）
 
 验证流程基于汇编程序：
 
@@ -38,13 +55,13 @@ pipelined-rv32i为支持lui和auipc指令，我手动添加支持
 
 这套流程的目标是：让本项目的实现通过“同一程序、同一检查点（regfile/datamem）”与参考实现进行一致性验证。
 
-## 4) 运行指令（可直接复制）
+## 5) 运行指令（可直接复制）
 
 下面命令默认在仓库根目录执行。
 
 说明：下面示例使用了本机的 conda 绝对路径 `/home/user/apps/miniconda3/bin/conda`；如果你的 `conda` 已在 `PATH` 中，可直接把它替换为 `conda`。
 
-### 4.1 一次性准备（Python 依赖）
+### 5.1 一次性准备（Python 依赖）
 
 `assemble_memh.py` / `generate_expected.py` 依赖 `bitstring`：
 
@@ -58,7 +75,7 @@ python3 -m pip install bitstring
 /home/user/apps/miniconda3/bin/conda run -n systemverilog python3 -m pip install bitstring
 ```
 
-### 4.2 生成 .memh（从汇编 .s）
+### 5.2 生成 .memh（从汇编 .s）
 
 批量组装全部程序：
 
@@ -74,7 +91,7 @@ python3 -m pip install bitstring
     python3 local-rv32i/tools/assemble_memh.py --asm local-rv32i/asm/itypes.s
 ```
 
-### 4.3 生成 expected（参考 pipelined-rv32i）
+### 5.3 生成 expected（参考 pipelined-rv32i）
 
 单个程序：
 
@@ -92,7 +109,7 @@ python3 -m pip install bitstring
 
 生成结果位于 `local-rv32i/expected/`。
 
-### 4.4 运行本项目并对比（Spinal 仿真）
+### 5.4 运行本项目并对比（Spinal 仿真）
 
 单个程序对比（指定 `.memh` 与最大周期）：
 
@@ -118,7 +135,7 @@ end
 - 本项目输出在 `sim_out/`：`regfile_<program>.txt`、`datamem_<program>.txt`
 - 参考 expected 在 `local-rv32i/expected/`：`regfile_<program>.txt`、`datamem_<program>.txt`
 
-### 4.5 生成 Verilog（可选）
+### 5.5 生成 Verilog（可选）
 
 ```fish
 sbt "runMain minicpu.MyCpuMain"
@@ -139,6 +156,7 @@ sbt "runMain minicpu.MyCpuMain"
 
 ## 测试说明
 
+- `ValidationMain TestRV32I` / `ValidationMain TestRV32M`：当前主规范验证入口
 - `CpuSmokeTest`：最小冒烟仿真，验证顶层可编译与时钟复位流程
 - `CpuInstructionTest`：指令级示例测试（ADDI/ADD/SUB/LW/SW/BEQ/JAL/JALR 等）
 - `PipelinedRv32iProgramTest`：加载 `.memh` 程序，运行后导出寄存器与数据存储器快照，并与 expected 自动比对
@@ -151,5 +169,5 @@ sbt "runMain minicpu.MyCpuMain"
 ## 参考
 
 - 项目计划文档：[docs/rv32i_5stage_plan.md](docs/rv32i_5stage_plan.md)
+- 验证清单：[VALIDATION.md](VALIDATION.md)
 - SpinalHDL 文档：https://spinalhdl.github.io/SpinalDoc-RTD/
-

@@ -24,3 +24,6 @@ simWorkspace/
 
 # Keep Hypo-Workflow files tracked, but ignore transient plan-state cache
 .plan-state/
+
+.pipeline/
+build/
